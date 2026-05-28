@@ -1,11 +1,20 @@
 import Navbar from "../components/layout/Navbar";
+<<<<<<< HEAD
 import Sidebar from "../components/layout/Sidebar";
 
+=======
+
+import Sidebar from "../components/layout/Sidebar";
+
+
+
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
 function Users() {
   return (
     <div>
       <Navbar />
 
+<<<<<<< HEAD
       <div style={{ display: 'flex' }}>
         <Sidebar />
 
@@ -14,11 +23,22 @@ function Users() {
 
           <table className="table table-striped table-hover mt-3">
             <thead className="table-dark">
+=======
+      <div className="container">
+        <Sidebar />
+
+        <main>
+          <h1>Usuarios</h1>
+
+          <table>
+            <thead>
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
               <tr>
                 <th>Nombre</th>
                 <th>Rol</th>
               </tr>
             </thead>
+<<<<<<< HEAD
             <tbody>
               <tr>
                 <td>Juan Pérez</td>
@@ -32,6 +52,11 @@ function Users() {
                 <td>Carlos Ruiz</td>
                 <td>Viewer</td>
               </tr>
+=======
+
+            <tbody>
+             
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
             </tbody>
           </table>
         </main>

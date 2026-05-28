@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Link, useLocation } from "react-router-dom";
 
 function Sidebar() {
@@ -13,11 +14,31 @@ function Sidebar() {
         <li><SidebarLink to="/users" icon="bi-people-fill" label="Empleados" /></li>
         <li><SidebarLink to="/projects" icon="bi-folder-fill" label="Proyectos" /></li>
         <li><SidebarLink to="/support" icon="bi-headset" label="Asistencia" /></li>
+=======
+import { Link } from "react-router-dom";
+
+function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <ul>
+        <li>
+          <Link to="/dashboard">
+            Dashboard
+          </Link>
+        </li>
+
+        <li>
+          <Link to="/users">
+            Usuarios
+          </Link>
+        </li>
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
       </ul>
     </aside>
   );
 }
 
+<<<<<<< HEAD
 function SidebarLink({ to, icon, label }: { to: string; icon: string; label: string }) {
   const location = useLocation();
   const isActive = location.pathname === to;
@@ -53,4 +74,6 @@ function SidebarLink({ to, icon, label }: { to: string; icon: string; label: str
   );
 }
 
+=======
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
 export default Sidebar;

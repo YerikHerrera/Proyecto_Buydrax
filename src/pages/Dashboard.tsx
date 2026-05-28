@@ -1,5 +1,9 @@
 import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
+<<<<<<< HEAD
+=======
+
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
 import Card from "../components/ui/Card";
 
 function Dashboard() {
@@ -7,6 +11,7 @@ function Dashboard() {
     <div>
       <Navbar />
 
+<<<<<<< HEAD
       <div style={{ display: 'flex' }}>
         <Sidebar />
 
@@ -21,6 +26,26 @@ function Dashboard() {
           </div>
         </main>
 
+=======
+      <div className="container">
+        <Sidebar />
+
+        <main>
+          <h1>Dashboard</h1>
+
+          <Card title="Ventas Totales">
+            <p>$15,000</p>
+          </Card>
+
+          <Card title="Usuarios Activos">
+            <p>250</p>
+          </Card>
+
+          <Card title="Pedidos">
+            <p>1,200</p>
+          </Card>
+        </main>
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
       </div>
     </div>
   );

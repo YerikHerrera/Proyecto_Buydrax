@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export default function Navbar() {
   return (
     <nav className="navbar navbar-expand-lg" style={{ backgroundColor: '#1E3A8A', padding: '0 20px' }}>
@@ -53,3 +54,14 @@ export default function Navbar() {
     </nav>
   )
 }
+=======
+function Navbar() {
+  return (
+    <nav className="navbar">
+      <h2>Mi Aplicación</h2>
+    </nav>
+  );
+}
+
+export default Navbar;
+>>>>>>> 009dea9 (Primer Commit del Proyecto)

@@ -10,14 +10,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+=======
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
     "react-router-dom": "^7.16.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.3",
+<<<<<<< HEAD
     "@types/react": "^19.2.16",
+=======
+    "@types/react": "^19.2.14",
+>>>>>>> 009dea9 (Primer Commit del Proyecto)
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^10.3.0",
