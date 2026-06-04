@@ -1,11 +1,14 @@
-<<<<<<< HEAD
 export default function Navbar() {
   return (
-    <nav className="navbar navbar-expand-lg" style={{ backgroundColor: '#1E3A8A', padding: '0 20px' }}>
+    <nav
+      className="navbar navbar-expand-lg"
+      style={{ backgroundColor: "#1E3A8A", padding: "0 20px" }}
+    >
       <div className="container-fluid">
-
-        {/* LOGO */}
-        <a className="navbar-brand text-white fw-bold d-flex align-items-center gap-2" href="#">
+        <a
+          className="navbar-brand text-white fw-bold d-flex align-items-center gap-2"
+          href="#"
+        >
           <i className="bi bi-box"></i> Buydrax
         </a>
 
@@ -21,47 +24,54 @@ export default function Navbar() {
         </button>
 
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul className="navbar-nav mx-auto mb-2 mb-lg-0" style={{ gap: '5px', fontSize: '13px' }}>
+          <ul
+            className="navbar-nav mx-auto mb-2 mb-lg-0"
+            style={{ gap: "5px", fontSize: "13px" }}
+          >
             <li className="nav-item">
-              <a className="nav-link text-white d-flex align-items-center gap-1" href="#"
-                style={{ borderBottom: '2px solid orange', paddingBottom: '4px' }}>
+              <a
+                className="nav-link text-white d-flex align-items-center gap-1"
+                href="#"
+                style={{
+                  borderBottom: "2px solid orange",
+                  paddingBottom: "4px",
+                }}
+              >
                 <i className="bi bi-house-fill"></i> Inicio
               </a>
             </li>
+
             <li className="nav-item">
               <a className="nav-link text-white d-flex align-items-center gap-1" href="#">
                 <i className="bi bi-people-fill"></i> Empleados
               </a>
             </li>
+
             <li className="nav-item">
               <a className="nav-link text-white d-flex align-items-center gap-1" href="#">
-                <i className="bi bi-people-fill"></i> Proyectos
+                <i className="bi bi-folder-fill"></i> Proyectos
               </a>
             </li>
+
             <li className="nav-item">
               <a className="nav-link text-white d-flex align-items-center gap-1" href="#">
                 <i className="bi bi-headset"></i> Asistencia
               </a>
             </li>
           </ul>
-          
+
           <button className="btn text-white" type="button">
             <i className="bi bi-search fs-5"></i>
           </button>
-
         </div>
       </div>
     </nav>
-  )
-}
-=======
-function Navbar() {
-  return (
-    <nav className="navbar">
-      <h2>Mi Aplicación</h2>
-    </nav>
   );
+<<<<<<< HEAD
 }
 
 export default Navbar;
 >>>>>>> 009dea9 (Primer Commit del Proyecto)
+=======
+}
+>>>>>>> d826519 (Resolver conflicto de merge en los componentes Navbar y Sidebar del layout)
