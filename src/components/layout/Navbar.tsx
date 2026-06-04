@@ -1,16 +1,26 @@
+import { Link, useLocation } from "react-router-dom";
+import logo from "../../assets/logobuydrax.png";
+
 export default function Navbar() {
+  const location = useLocation();
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
   return (
     <nav
       className="navbar navbar-expand-lg"
       style={{ backgroundColor: "#1E3A8A", padding: "0 20px" }}
     >
       <div className="container-fluid">
-        <a
+        <Link
           className="navbar-brand text-white fw-bold d-flex align-items-center gap-2"
-          href="#"
+          to="/dashboard"
         >
-          <i className="bi bi-box"></i> Buydrax
-        </a>
+          <img
+            src={logo}
+            alt="Buydrax"
+            style={{ width: "190px", height: "60px", objectFit: "contain" }}
+          />
+        </Link>
 
         <button
           className="navbar-toggler"
@@ -29,40 +39,87 @@ export default function Navbar() {
             style={{ gap: "5px", fontSize: "13px" }}
           >
             <li className="nav-item">
-              <a
+              <Link
                 className="nav-link text-white d-flex align-items-center gap-1"
-                href="#"
+                to="/dashboard"
                 style={{
-                  borderBottom: "2px solid orange",
+                  borderBottom: location.pathname === "/dashboard" ? "2px solid orange" : "none",
                   paddingBottom: "4px",
                 }}
               >
                 <i className="bi bi-house-fill"></i> Inicio
-              </a>
+              </Link>
             </li>
 
             <li className="nav-item">
-              <a className="nav-link text-white d-flex align-items-center gap-1" href="#">
+              <Link
+                className="nav-link text-white d-flex align-items-center gap-1"
+                to="/empleados"
+                style={{
+                  borderBottom: location.pathname === "/empleados" ? "2px solid orange" : "none",
+                  paddingBottom: "4px",
+                }}
+              >
                 <i className="bi bi-people-fill"></i> Empleados
-              </a>
+              </Link>
             </li>
 
             <li className="nav-item">
-              <a className="nav-link text-white d-flex align-items-center gap-1" href="#">
+              <Link
+                className="nav-link text-white d-flex align-items-center gap-1"
+                to="/proyectos"
+                style={{
+                  borderBottom: location.pathname === "/proyectos" ? "2px solid orange" : "none",
+                  paddingBottom: "4px",
+                }}
+              >
                 <i className="bi bi-folder-fill"></i> Proyectos
-              </a>
+              </Link>
             </li>
 
             <li className="nav-item">
-              <a className="nav-link text-white d-flex align-items-center gap-1" href="#">
+              <Link
+                className="nav-link text-white d-flex align-items-center gap-1"
+                to="/asistencia"
+                style={{
+                  borderBottom: location.pathname === "/asistencia" ? "2px solid orange" : "none",
+                  paddingBottom: "4px",
+                }}
+              >
                 <i className="bi bi-headset"></i> Asistencia
-              </a>
+              </Link>
             </li>
           </ul>
 
-          <button className="btn text-white" type="button">
-            <i className="bi bi-search fs-5"></i>
-          </button>
+          {/* BÚSQUEDA + PERFIL */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <button className="btn text-white" type="button">
+              <i className="bi bi-search fs-5"></i>
+            </button>
+
+            {/* PERFIL */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff" }}>
+              <div style={{
+                width: "34px",
+                height: "34px",
+                borderRadius: "50%",
+                backgroundColor: "#f5a623",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "700",
+                fontSize: "14px",
+                color: "#fff",
+                flexShrink: 0,
+              }}>
+                {usuario.nombre?.charAt(0) || "U"}
+              </div>
+              <span style={{ fontSize: "13px" }}>
+                {usuario.nombre || "Usuario"}
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
     </nav>
