@@ -1,4 +1,3 @@
-// src/components/layout/Sidebar.tsx
 import { Link, useLocation } from "react-router-dom";
 
 <<<<<<< HEAD

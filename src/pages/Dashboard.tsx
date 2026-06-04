@@ -32,14 +32,13 @@ function Dashboard() {
           textAlign: "center"
         }}>
 
-          {/* LOGO */}
           <img
             src={logo}
             alt="Logo de Buydrax"
             style={{ width: "110px", height: "auto", marginBottom: "24px" }}
           />
 
-          {/* TAG */}
+
           <p style={{
             fontSize: "11px",
             letterSpacing: "3px",
@@ -50,7 +49,6 @@ function Dashboard() {
             — Panel principal —
           </p>
 
-          {/* TÍTULO */}
           <h1 style={{
             fontSize: "36px",
             fontWeight: "800",
