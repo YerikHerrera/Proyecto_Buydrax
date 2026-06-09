@@ -6,8 +6,8 @@ const menus: Record<string, { to: string; icon: string; label: string }[]> = {
     { to: "/reportes", icon: "bi-bar-chart-fill", label: "Reportes" },
   ],
   "/empleados": [
-    { to: "/empleados", icon: "bi-people-fill", label: "Registro Empleado" },
-    { to: "/empleados/agregar", icon: "bi-person-plus-fill", label: "Lista Empleado" },
+    { to: "/empleados", icon: "bi-people-fill", label: "Lista de empleados" },
+    { to: "/empleados/agregar", icon: "bi-person-plus-fill", label: "Registro Empleados" },
     { to: "/empleados/cargos", icon: "bi-briefcase-fill", label: "Perfiles" },
     { to: "/empleados/documentos", icon: "bi-folder-fill", label: "Certificaciones" },
   ],
