@@ -43,7 +43,10 @@ export default function Navbar() {
                 className="nav-link text-white d-flex align-items-center gap-1"
                 to="/dashboard"
                 style={{
-                  borderBottom: location.pathname === "/dashboard" ? "2px solid orange" : "none",
+                  borderBottom:
+                    location.pathname === "/dashboard"
+                      ? "2px solid orange"
+                      : "none",
                   paddingBottom: "4px",
                 }}
               >
@@ -56,7 +59,10 @@ export default function Navbar() {
                 className="nav-link text-white d-flex align-items-center gap-1"
                 to="/empleados"
                 style={{
-                  borderBottom: location.pathname === "/empleados" ? "2px solid orange" : "none",
+                  borderBottom:
+                    location.pathname === "/empleados"
+                      ? "2px solid orange"
+                      : "none",
                   paddingBottom: "4px",
                 }}
               >
@@ -69,7 +75,10 @@ export default function Navbar() {
                 className="nav-link text-white d-flex align-items-center gap-1"
                 to="/proyectos"
                 style={{
-                  borderBottom: location.pathname === "/proyectos" ? "2px solid orange" : "none",
+                  borderBottom:
+                    location.pathname === "/proyectos"
+                      ? "2px solid orange"
+                      : "none",
                   paddingBottom: "4px",
                 }}
               >
@@ -82,7 +91,10 @@ export default function Navbar() {
                 className="nav-link text-white d-flex align-items-center gap-1"
                 to="/asistencia"
                 style={{
-                  borderBottom: location.pathname === "/asistencia" ? "2px solid orange" : "none",
+                  borderBottom:
+                    location.pathname === "/asistencia"
+                      ? "2px solid orange"
+                      : "none",
                   paddingBottom: "4px",
                 }}
               >
@@ -91,44 +103,50 @@ export default function Navbar() {
             </li>
           </ul>
 
-          {/* BÚSQUEDA + PERFIL */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
             <button className="btn text-white" type="button">
               <i className="bi bi-search fs-5"></i>
             </button>
 
-            {/* PERFIL */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff" }}>
-              <div style={{
-                width: "34px",
-                height: "34px",
-                borderRadius: "50%",
-                backgroundColor: "#f5a623",
+            <div
+              style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "700",
-                fontSize: "14px",
+                gap: "8px",
                 color: "#fff",
-                flexShrink: 0,
-              }}>
+              }}
+            >
+              <div
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "50%",
+                  backgroundColor: "#f5a623",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "700",
+                  fontSize: "14px",
+                  color: "#fff",
+                  flexShrink: 0,
+                }}
+              >
                 {usuario.nombre?.charAt(0) || "U"}
               </div>
+
               <span style={{ fontSize: "13px" }}>
                 {usuario.nombre || "Usuario"}
               </span>
             </div>
           </div>
-
         </div>
       </div>
     </nav>
   );
-<<<<<<< HEAD
 }
-
-export default Navbar;
->>>>>>> 009dea9 (Primer Commit del Proyecto)
-=======
-}
->>>>>>> d826519 (Resolver conflicto de merge en los componentes Navbar y Sidebar del layout)

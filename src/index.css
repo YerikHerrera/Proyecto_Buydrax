@@ -1,4 +1,4 @@
-#sidebar {
+ #sidebar {
   width: 220px;
   min-height: 100vh;
   background: linear-gradient(180deg, #e8820c, #f5a623);
@@ -40,10 +40,4 @@
   margin-left: 220px;
   padding: 30px;
   width: 100%;
-<<<<<<< HEAD
 }
-=======
->>>>>>> 009dea9 (Primer Commit del Proyecto)
-=======
-}
->>>>>>> 39b5048 (- Login: se reemplazó imagen de fondo, se ajustó layout visual del)
