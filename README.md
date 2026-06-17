@@ -8,7 +8,6 @@ Buydrax centraliza el registro de empleados, el control de asistencia y turnos, 
 
 ## Equipo de desarrollo
 
-+----------------------------------------------------------------------+
 | Integrante                     | Rol                                 |
 |--------------------------------|-------------------------------------|
 | Samuel Castro Vanegas          | Líder del Proyecto & Subprogramador |
@@ -16,7 +15,6 @@ Buydrax centraliza el registro de empleados, el control de asistencia y turnos, 
 | Yerik Julián Castañeda Herrera | Programador                         |
 | Kevin Johansen Rondón Novoa    | Asegurador de Calidad (QA)          |
 | Edwar Julián García Bernate    | Arquitecto                          |
-+----------------------------------------------------------------------+
 
 Proyecto desarrollado como parte de la formación Tecnólogo en Análisis y Desarrollo de Software — SENA.
 
@@ -109,15 +107,13 @@ El script SQL con el esquema completo de la base de datos (`buydrax_db`) se encu
 
 Este proyecto sigue un flujo de trabajo basado en ramas por funcionalidad y Pull Requests hacia `master`.
 
-+-------------------------------------------------------------------------+
 | Prefijo de commit | Uso                                                 |
 |-------------------|-----------------------------------------------------|
 | `feat:`           | Nueva funcionalidad o página                        |
 | `fix:`            | Corrección de errores                               |
 | `style:`          | Cambios visuales sin alterar lógica                 |
-| `refactor:`       | Reorganización de código sin cambiar comportamiento |
 | `docs:`           | Documentación tecnica                               |
-+-------------------------------------------------------------------------+
+
 ---
 
 ## Licencia
