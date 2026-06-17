@@ -25,41 +25,21 @@ const menus: Record<string, { to: string; icon: string; label: string }[]> = {
 
 export default function Sidebar() {
   const location = useLocation();
-
   const seccion = "/" + location.pathname.split("/")[1];
   const items = menus[seccion] || menus["/dashboard"];
 
   return (
-    <div
-      style={{
-        width: "220px",
-        minHeight: "calc(100vh - 64px)",
-        backgroundColor: "#F97316",
-        borderRight: "1px solid #e0e0e0",
-        padding: "20px 12px",
-      }}
-    >
+    // ÚNICO CAMBIO: agregar className="sidebar-nav"
+    // y quitar width/minHeight del inline style (los controla el CSS)
+    <div className="sidebar-nav">
       {items.map((item) => (
         <Link
           key={item.to}
           to={item.to}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            padding: "11px 14px",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontSize: "13.5px",
-            marginBottom: "4px",
-            backgroundColor:
-              location.pathname === item.to ? "#1E3A8A" : "transparent",
-            color: location.pathname === item.to ? "#fff" : "#333",
-            fontWeight: location.pathname === item.to ? "600" : "400",
-          }}
+          className={`sidebar-link ${location.pathname === item.to ? "sidebar-link--active" : ""}`}
         >
           <i className={`bi ${item.icon}`}></i>
-          {item.label}
+          <span className="sidebar-label">{item.label}</span>
         </Link>
       ))}
     </div>

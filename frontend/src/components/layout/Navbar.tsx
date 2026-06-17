@@ -1,9 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
 import logo from "../../assets/logobuydrax.png";
 
 export default function Navbar() {
   const location = useLocation();
   const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   return (
     <nav
@@ -25,103 +28,56 @@ export default function Navbar() {
         <button
           className="navbar-toggler"
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded={false}
+          onClick={() => setMenuAbierto(!menuAbierto)}
+          aria-expanded={menuAbierto}
+          style={{ borderColor: "rgba(255,255,255,0.5)" }}
         >
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        <div className="collapse navbar-collapse" id="navbarSupportedContent">
+        <div
+          className={`collapse navbar-collapse ${menuAbierto ? "show" : ""}`}
+          id="navbarSupportedContent"
+          style={{
+            backgroundColor: menuAbierto ? "#1E3A8A" : "transparent",
+            padding: menuAbierto ? "10px 0" : "0",
+          }}
+        >
           <ul
             className="navbar-nav mx-auto mb-2 mb-lg-0"
             style={{ gap: "5px", fontSize: "13px" }}
           >
-            <li className="nav-item">
-              <Link
-                className="nav-link text-white d-flex align-items-center gap-1"
-                to="/dashboard"
-                style={{
-                  borderBottom:
-                    location.pathname === "/dashboard"
-                      ? "2px solid orange"
-                      : "none",
-                  paddingBottom: "4px",
-                }}
-              >
-                <i className="bi bi-house-fill"></i> Inicio
-              </Link>
-            </li>
-
-            <li className="nav-item">
-              <Link
-                className="nav-link text-white d-flex align-items-center gap-1"
-                to="/empleados"
-                style={{
-                  borderBottom:
-                    location.pathname === "/empleados"
-                      ? "2px solid orange"
-                      : "none",
-                  paddingBottom: "4px",
-                }}
-              >
-                <i className="bi bi-people-fill"></i> Empleados
-              </Link>
-            </li>
-
-            <li className="nav-item">
-              <Link
-                className="nav-link text-white d-flex align-items-center gap-1"
-                to="/proyectos"
-                style={{
-                  borderBottom:
-                    location.pathname === "/proyectos"
-                      ? "2px solid orange"
-                      : "none",
-                  paddingBottom: "4px",
-                }}
-              >
-                <i className="bi bi-folder-fill"></i> Proyectos
-              </Link>
-            </li>
-
-            <li className="nav-item">
-              <Link
-                className="nav-link text-white d-flex align-items-center gap-1"
-                to="/asistencia"
-                style={{
-                  borderBottom:
-                    location.pathname === "/asistencia"
-                      ? "2px solid orange"
-                      : "none",
-                  paddingBottom: "4px",
-                }}
-              >
-                <i className="bi bi-headset"></i> Asistencia
-              </Link>
-            </li>
+            {[
+              { path: "/dashboard", icon: "bi-house-fill", label: "Inicio" },
+              { path: "/empleados", icon: "bi-people-fill", label: "Empleados" },
+              { path: "/proyectos", icon: "bi-folder-fill", label: "Proyectos" },
+              { path: "/asistencia", icon: "bi-headset", label: "Asistencia" },
+            ].map((item) => (
+              <li className="nav-item" key={item.path}>
+                <Link
+                  className="nav-link text-white d-flex align-items-center gap-1"
+                  to={item.path}
+                  onClick={() => setMenuAbierto(false)} 
+                  style={{
+                    borderBottom:
+                      location.pathname === item.path
+                        ? "2px solid orange"
+                        : "none",
+                    paddingBottom: "4px",
+                  }}
+                >
+                  <i className={`bi ${item.icon}`}></i> {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "16px",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <button className="btn text-white" type="button">
               <i className="bi bi-search fs-5"></i>
             </button>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                color: "#fff",
-              }}
-            >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff" }}>
               <div
                 style={{
                   width: "34px",
@@ -139,10 +95,7 @@ export default function Navbar() {
               >
                 {usuario.nombre?.charAt(0) || "U"}
               </div>
-
-              <span style={{ fontSize: "13px" }}>
-                {usuario.nombre || "Usuario"}
-              </span>
+              <span style={{ fontSize: "13px" }}>{usuario.nombre || "Usuario"}</span>
             </div>
           </div>
         </div>
