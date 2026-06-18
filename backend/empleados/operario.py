@@ -19,10 +19,3 @@ class Operario(Empleado):
     def describir(self) -> str:
         return f"Operario: {self.get_nombre()} | Doc: {self.get_documento()} | Horas extra: {self.__horas_extra}"
 
-
-
-
-### backend/empleados/supervisor.py
-
-
-from empleados.base import Empleado

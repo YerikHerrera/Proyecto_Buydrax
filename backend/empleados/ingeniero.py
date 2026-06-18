@@ -3,7 +3,7 @@ from empleados.base import Empleado
 
 class Ingeniero(Empleado):
     """Ingeniero de obra con salario base más porcentaje por proyecto."""
-s
+
     def __init__(self, nombre: str, documento: str, salario_base: float, porcentaje_proyecto: float):
         super().__init__(nombre, documento, salario_base)
         self.__porcentaje_proyecto = porcentaje_proyecto
