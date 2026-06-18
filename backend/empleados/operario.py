@@ -1,3 +1,5 @@
+from empleados.base import Empleado
+
 class Operario(Empleado):
     """Empleado de obra con horas trabajadas y tarifa por hora."""
 
