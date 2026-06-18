@@ -20,9 +20,9 @@ class Operario(Empleado):
         return f"Operario: {self.get_nombre()} | Doc: {self.get_documento()} | Horas extra: {self.__horas_extra}"
 
 
----
+
 
 ### backend/empleados/supervisor.py
 
-python
+
 from empleados.base import Empleado
