@@ -109,8 +109,9 @@ export default function ListaEmpleados() {
                 <div style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "#FFF3E8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <i className="bi bi-people-fill" style={{ color: "#F97316", fontSize: "22px" }}></i>
                 </div>
-                <div>
-                  <h1 style={{ fontSize: "22px", fontWeight: 800, color: "#0F172A", margin: 0 }}>LISTA DE EMPLEADOS</h1>
+                <div style={{ minWidth: 0 }}>
+                  {/* ✅ CAMBIO: quitado fontSize inline, ahora usa clase lista-titulo */}
+                  <h1 className="lista-titulo">LISTA DE EMPLEADOS</h1>
                   <p style={{ fontSize: "13px", color: "#64748B", margin: "2px 0 0" }}>
                     Consulta y gestiona la información de los empleados de la empresa.
                   </p>
@@ -194,7 +195,10 @@ export default function ListaEmpleados() {
                           <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: emp.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: "12px", flexShrink: 0 }}>
                             {iniciales(emp.nombre)}
                           </div>
-                          <span style={{ fontSize: "13.5px", fontWeight: 500, color: "#0F172A" }}>{emp.nombre}</span>
+                          {/* ✅ CAMBIO: minWidth 0 para que el nombre haga wrap en pantallas pequeñas */}
+                          <span style={{ fontSize: "13.5px", fontWeight: 500, color: "#0F172A", minWidth: 0, wordBreak: "break-word" }}>
+                            {emp.nombre}
+                          </span>
                         </div>
                       </td>
                       <td style={celdaStyle} className="col-tipo-doc">{emp.tipoDoc}</td>
@@ -242,7 +246,7 @@ export default function ListaEmpleados() {
               >
                 <i className="bi bi-arrow-left"></i> Anterior
               </button>
-              <span style={{ fontSize: "13px", color: "#64748B" }}>
+              <span style={{ fontSize: "13px", color: "#64748B", textAlign: "center" }}>
                 Página <strong style={{ color: "#0F172A" }}>{paginaActual}</strong> de <strong style={{ color: "#0F172A" }}>{totalPaginas}</strong> · {filtrados.length} empleado{filtrados.length !== 1 ? "s" : ""}
               </span>
               <button

@@ -1,30 +1,30 @@
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
+import "../styles/AgregarEmpleados.css"; // ✅ asegúrate de importar el CSS
 
 export default function AgregarEmpleados() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f5f6fa", fontFamily: "'Segoe UI', sans-serif" }}>
+    <div className="agregar-page">
       <Navbar />
-      <div style={{ display: "flex" }}>
+      <div className="agregar-body">
         <Sidebar />
 
-        <main style={{ flex: 1, padding: "40px" }}>
+        <main className="agregar-main">
 
           {/* HEADER */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "8px" }}>
+          <div className="agregar-header">
             <div style={{
-              width: "48px", height: "48px", borderRadius: "12px",
+              width: "48px", height: "48px", borderRadius: "12px", flexShrink: 0,
               backgroundColor: "#e8eeff", display: "flex", alignItems: "center", justifyContent: "center"
             }}>
               <i className="bi bi-person-badge" style={{ fontSize: "22px", color: "#1E3A8A" }}></i>
             </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "#111" }}>
-                REGISTRO DE PERFIL DE EMPLEADO
-              </h2>
+            <div style={{ minWidth: 0 }}>
+              {/* ✅ clase en lugar de inline fontSize para que el responsive funcione */}
+              <h2 className="agregar-titulo">REGISTRO DE PERFIL DE EMPLEADO</h2>
               <p style={{ margin: 0, fontSize: "13px", color: "#888" }}>
                 Completa la información del perfil del empleado.
               </p>
@@ -33,94 +33,57 @@ export default function AgregarEmpleados() {
 
           <hr style={{ marginBottom: "32px", borderColor: "#e0e0e0" }} />
 
-          {/* FORMULARIO */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "24px",
-            maxWidth: "860px"
-          }}>
+          {/* FORMULARIO — ahora usa la clase CSS */}
+          <div className="agregar-form">
 
             {/* Nacionalidad */}
             <div>
-              <label style={{ fontSize: "13px", fontWeight: "600", color: "#333", display: "block", marginBottom: "8px" }}>
-                Nacionalidad
-              </label>
+              <label className="agregar-label">Nacionalidad</label>
               <div style={{ position: "relative" }}>
-                <i className="bi bi-globe" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", fontSize: "15px" }}></i>
-                <select style={{
-                  width: "100%", padding: "12px 16px 12px 40px",
-                  borderRadius: "10px", border: "1.5px solid #e0e0e0",
-                  fontSize: "14px", color: "#333", backgroundColor: "#fff",
-                  appearance: "none", cursor: "pointer", outline: "none"
-                }}>
+                <i className="bi bi-globe agregar-icon-left"></i>
+                <select className="agregar-input">
                   <option>Colombiana</option>
                   <option>Venezolana</option>
                   <option>Ecuatoriana</option>
                   <option>Peruana</option>
                   <option>Otra</option>
                 </select>
-                <i className="bi bi-chevron-down" style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", pointerEvents: "none" }}></i>
+                <i className="bi bi-chevron-down agregar-icon-right"></i>
               </div>
             </div>
 
             {/* Contacto de emergencia */}
             <div>
-              <label style={{ fontSize: "13px", fontWeight: "600", color: "#333", display: "block", marginBottom: "8px" }}>
-                Contacto de emergencia
-              </label>
+              <label className="agregar-label">Contacto de emergencia</label>
               <div style={{ position: "relative" }}>
-                <i className="bi bi-telephone" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", fontSize: "15px" }}></i>
-                <input
-                  type="tel"
-                  placeholder="300 000 0000"
-                  style={{
-                    width: "100%", padding: "12px 16px 12px 40px",
-                    borderRadius: "10px", border: "1.5px solid #e0e0e0",
-                    fontSize: "14px", color: "#333", backgroundColor: "#fff",
-                    outline: "none", boxSizing: "border-box"
-                  }}
-                />
+                <i className="bi bi-telephone agregar-icon-left"></i>
+                <input type="tel" placeholder="300 000 0000" className="agregar-input" />
               </div>
             </div>
 
             {/* Estado Civil */}
             <div>
-              <label style={{ fontSize: "13px", fontWeight: "600", color: "#333", display: "block", marginBottom: "8px" }}>
-                Estado Civil
-              </label>
+              <label className="agregar-label">Estado Civil</label>
               <div style={{ position: "relative" }}>
-                <i className="bi bi-people" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", fontSize: "15px" }}></i>
-                <select style={{
-                  width: "100%", padding: "12px 16px 12px 40px",
-                  borderRadius: "10px", border: "1.5px solid #e0e0e0",
-                  fontSize: "14px", color: "#888", backgroundColor: "#fff",
-                  appearance: "none", cursor: "pointer", outline: "none"
-                }}>
-                  <option value="" disabled selected>Seleccionar estado civil</option>
+                <i className="bi bi-people agregar-icon-left"></i>
+                <select className="agregar-input agregar-input--placeholder">
+                  <option value="" disabled>Seleccionar estado civil</option>
                   <option>Soltero/a</option>
                   <option>Casado/a</option>
                   <option>Unión libre</option>
                   <option>Divorciado/a</option>
                   <option>Viudo/a</option>
                 </select>
-                <i className="bi bi-chevron-down" style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", pointerEvents: "none" }}></i>
+                <i className="bi bi-chevron-down agregar-icon-right"></i>
               </div>
             </div>
 
             {/* Tipo de sangre */}
             <div>
-              <label style={{ fontSize: "13px", fontWeight: "600", color: "#333", display: "block", marginBottom: "8px" }}>
-                Tipo de sangre
-              </label>
+              <label className="agregar-label">Tipo de sangre</label>
               <div style={{ position: "relative" }}>
-                <i className="bi bi-droplet" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", fontSize: "15px" }}></i>
-                <select style={{
-                  width: "100%", padding: "12px 16px 12px 40px",
-                  borderRadius: "10px", border: "1.5px solid #e0e0e0",
-                  fontSize: "14px", color: "#333", backgroundColor: "#fff",
-                  appearance: "none", cursor: "pointer", outline: "none"
-                }}>
+                <i className="bi bi-droplet agregar-icon-left"></i>
+                <select className="agregar-input">
                   <option>O+</option>
                   <option>O-</option>
                   <option>A+</option>
@@ -130,23 +93,16 @@ export default function AgregarEmpleados() {
                   <option>AB+</option>
                   <option>AB-</option>
                 </select>
-                <i className="bi bi-chevron-down" style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", pointerEvents: "none" }}></i>
+                <i className="bi bi-chevron-down agregar-icon-right"></i>
               </div>
             </div>
 
             {/* EPS */}
             <div>
-              <label style={{ fontSize: "13px", fontWeight: "600", color: "#333", display: "block", marginBottom: "8px" }}>
-                EPS
-              </label>
+              <label className="agregar-label">EPS</label>
               <div style={{ position: "relative" }}>
-                <i className="bi bi-shield-plus" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", fontSize: "15px" }}></i>
-                <select style={{
-                  width: "100%", padding: "12px 16px 12px 40px",
-                  borderRadius: "10px", border: "1.5px solid #e0e0e0",
-                  fontSize: "14px", color: "#333", backgroundColor: "#fff",
-                  appearance: "none", cursor: "pointer", outline: "none"
-                }}>
+                <i className="bi bi-shield-plus agregar-icon-left"></i>
+                <select className="agregar-input">
                   <option>Nueva EPS</option>
                   <option>Sura</option>
                   <option>Sanitas</option>
@@ -154,60 +110,27 @@ export default function AgregarEmpleados() {
                   <option>Famisanar</option>
                   <option>Coosalud</option>
                 </select>
-                <i className="bi bi-chevron-down" style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", pointerEvents: "none" }}></i>
+                <i className="bi bi-chevron-down agregar-icon-right"></i>
               </div>
             </div>
 
             {/* Nombre completo */}
             <div>
-              <label style={{ fontSize: "13px", fontWeight: "600", color: "#333", display: "block", marginBottom: "8px" }}>
-                Nombre completo
-              </label>
+              <label className="agregar-label">Nombre completo</label>
               <div style={{ position: "relative" }}>
-                <i className="bi bi-person" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#888", fontSize: "15px" }}></i>
-                <input
-                  type="text"
-                  placeholder="Nombre del empleado"
-                  style={{
-                    width: "100%", padding: "12px 16px 12px 40px",
-                    borderRadius: "10px", border: "1.5px solid #e0e0e0",
-                    fontSize: "14px", color: "#333", backgroundColor: "#fff",
-                    outline: "none", boxSizing: "border-box"
-                  }}
-                />
+                <i className="bi bi-person agregar-icon-left"></i>
+                <input type="text" placeholder="Nombre del empleado" className="agregar-input" />
               </div>
             </div>
 
           </div>
 
           {/* BOTONES */}
-          <div style={{
-            display: "flex", justifyContent: "flex-end", gap: "12px",
-            marginTop: "40px", maxWidth: "860px"
-          }}>
-            <button
-              onClick={() => navigate("/empleados")}
-              style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                padding: "12px 28px", borderRadius: "10px",
-                border: "1.5px solid #e0e0e0", background: "#fff",
-                fontSize: "14px", fontWeight: "600", color: "#333",
-                cursor: "pointer"
-              }}
-            >
+          <div className="agregar-botones">
+            <button className="agregar-btn-secundario" onClick={() => navigate("/empleados")}>
               <i className="bi bi-arrow-left"></i> Anterior
             </button>
-
-            <button
-              onClick={() => alert("Empleado guardado")}
-              style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                padding: "12px 28px", borderRadius: "10px",
-                border: "none", background: "#1E3A8A",
-                fontSize: "14px", fontWeight: "600", color: "#fff",
-                cursor: "pointer"
-              }}
-            >
+            <button className="agregar-btn-primario" onClick={() => alert("Empleado guardado")}>
               <i className="bi bi-floppy"></i> Guardar registro
             </button>
           </div>

@@ -9,12 +9,24 @@
 
 .lista-body {
   display: flex;
+  overflow: hidden; /* ← NUEVO: evita que Sidebar desborde */
 }
 
 .lista-main {
   flex: 1;
   padding: 28px 32px;
-  min-width: 0; /* evita que el contenido desborde */
+  min-width: 0;
+  overflow: hidden; /* ← NUEVO */
+}
+
+/* ══════════════════════════════
+   CARD CONTENEDORA
+══════════════════════════════ */
+.lista-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
 /* ══════════════════════════════
@@ -25,12 +37,23 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
+  gap: 12px;
 }
 
 .lista-header-left {
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0; /* ← NUEVO: permite que el texto haga wrap */
+}
+
+/* Título — controlado desde CSS para poder aplicar responsive */
+.lista-titulo {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .lista-export-btn {
@@ -46,6 +69,7 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0; /* ← NUEVO: no se encoge */
 }
 
 /* ══════════════════════════════
@@ -64,15 +88,15 @@
 .tabla-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  margin: 0 -4px; /* ← NUEVO: compensa el padding lateral en mobile */
 }
 
 .tabla-wrapper table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px; /* tabla no colapsa, scrollea */
+  min-width: 560px;
 }
 
-/* Columnas opcionales — se ocultan en móvil */
 .col-tipo-doc,
 .col-num-doc,
 .col-telefono {
@@ -100,9 +124,13 @@
     padding: 16px;
   }
 
+  .lista-card {
+    padding: 20px 16px;
+  }
+
   .lista-header {
     flex-direction: column;
-    gap: 12px;
+    align-items: stretch;
   }
 
   .lista-export-btn {
@@ -115,7 +143,6 @@
     gap: 10px;
   }
 
-  /* Ocultar columnas menos importantes */
   .col-tipo-doc,
   .col-num-doc {
     display: none;
@@ -127,18 +154,22 @@
 ══════════════════════════════ */
 @media screen and (max-width: 480px) {
   .lista-main {
-    padding: 12px;
+    padding: 10px 8px;
+  }
+
+  .lista-card {
+    padding: 16px 12px; /* ← NUEVO: menos padding en pantalla pequeña */
+    border-radius: 12px;
+  }
+
+  .lista-titulo {
+    font-size: 16px; /* ← Funciona porque ya no es inline */
   }
 
   .lista-filtros {
-    grid-template-columns: 1fr; /* filtros en columna */
+    grid-template-columns: 1fr;
   }
 
-  .lista-header-left h1 {
-    font-size: 16px !important;
-  }
-
-  /* Ocultar también teléfono */
   .col-telefono {
     display: none;
   }
@@ -148,5 +179,11 @@
     align-items: center;
     gap: 10px;
     text-align: center;
+  }
+
+  /* Botones de paginación full width en mobile */
+  .lista-paginacion button {
+    width: 100%;
+    justify-content: center;
   }
 }
