@@ -8,13 +8,14 @@ Buydrax centraliza el registro de empleados, el control de asistencia y turnos, 
 
 ## Equipo de desarrollo
 
-| Integrante                     | Rol                                 |
-|--------------------------------|-------------------------------------|
-| Samuel Castro Vanegas          | Líder del Proyecto & Subprogramador |
-| Rodney Sebastián Marín Mateus  | Analista                            |
-| Yerik Julián Castañeda Herrera | Programador                         |
-| Kevin Johansen Rondón Novoa    | Asegurador de Calidad (QA)          |
-| Edwar Julián García Bernate    | Arquitecto                          |
+| Integrante                         | Rol                                 |
+|------------------------------------|-------------------------------------|
+| Samuel Castro Vanegas              | Líder del Proyecto & Subprogramador |
+| Rodney Sebastián Marín Mateus      | Analista                            |
+| Yerik Julián Castañeda Herrera     | Programador                         |
+| Kevin Johansen Rondón Novoa        | Asegurador de Calidad (QA)          |
+| Edwar Julián García Bernate        | Arquitecto                          |
+| Hanna Valentina Nausa Rodriguez    | Arquitecta                          |
 
 Proyecto desarrollado como parte de la formación Tecnólogo en Análisis y Desarrollo de Software — SENA.
 
