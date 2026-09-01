@@ -1,0 +1,121 @@
+/* ══════════════════════════════
+   LAYOUT PRINCIPAL
+══════════════════════════════ */
+.ContenedorDashboard {
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.dashboard-body {
+  display: flex;
+}
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  padding: 40px;
+  text-align: center;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+}
+
+/* ══════════════════════════════
+   SIDEBAR
+══════════════════════════════ */
+.sidebar-nav {
+  width: 220px;
+  min-height: calc(100vh - 64px);
+  background-color: #F97316;
+  border-right: 1px solid #e0e0e0;
+  padding: 20px 12px;
+  flex-shrink: 0;
+  transition: width 0.2s ease;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13.5px;
+  margin-bottom: 4px;
+  color: #333;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-link--active {
+  background-color: #1E3A8A;
+  color: #fff;
+  font-weight: 600;
+}
+
+.sidebar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ══════════════════════════════
+   RESPONSIVE — TABLET (≤ 768px)
+══════════════════════════════ */
+@media screen and (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .dashboard-main {
+    padding: 24px 16px;
+    min-height: calc(100vh - 56px);
+  }
+
+  /* Sidebar solo muestra iconos */
+  .sidebar-nav {
+    width: 56px;
+    padding: 20px 8px;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 11px 0;
+    gap: 0;
+  }
+
+  /* Ocultar texto, solo iconos */
+  .sidebar-label {
+    display: none;
+  }
+}
+
+/* ══════════════════════════════
+   RESPONSIVE — MÓVIL (≤ 480px)
+══════════════════════════════ */
+@media screen and (max-width: 480px) {
+  .sidebar-nav {
+    width: 48px;
+    padding: 16px 6px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .dashboard-main {
+    padding: 16px 10px;
+  }
+}
