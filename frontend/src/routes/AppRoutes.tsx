@@ -7,6 +7,7 @@ import CrearProyecto from "../pages/CrearProyecto";
 import ListaEmpleados from "../pages/ListaEmpleados";
 import AsignacionEmpleado from "../pages/AsignacionEmpleado";
 import Supervisor from "../pages/Supervisor";
+import Asistencia from "../pages/asistencia";
 
 <><Route path="/proyectos" element={<CrearProyecto />} /><Route path="/proyectos/asignacion" element={<AsignacionEmpleado />} /><Route path="/proyectos/supervisor" element={<Supervisor />} /></>
  
@@ -22,6 +23,7 @@ function AppRoutes() {
         <Route path="/empleados/lista" element={<ListaEmpleados />} />
         <Route path="/empleados/agregar" element={<AgregarEmpleados />} />  {/* ← formulario real */}
         <Route path="/proyectos" element={<CrearProyecto />} />
+        <Route path="/asistencia" element={<Asistencia />} />
       </Routes>
     </BrowserRouter>
   );

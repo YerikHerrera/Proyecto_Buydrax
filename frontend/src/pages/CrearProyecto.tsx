@@ -163,7 +163,7 @@ export default function CrearProyecto() {
 
           <div className="agregar-botones">
             <Button text="Guardar Proyecto" icon="bi-floppy" onClick={handleGuardar} />
-            <Button text="Editar Proyecto" icon="bi-pencil" variant="azul" onClick={handleEditar} />
+            <Button text="Editar Proyecto" icon="bi-pencil" variant="secundario" onClick={handleEditar} />
           </div>
         </main>
       </div>
