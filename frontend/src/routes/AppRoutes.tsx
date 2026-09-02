@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
+import ForgotPassword from "../pages/forgotPassword";
 import Dashboard from "../pages/Dashboard";
 import Users from "../pages/Users";
 import AgregarEmpleados from "../pages/AgregarEmpleados";
@@ -16,7 +17,9 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Rutas de autenticación */}
         <Route path="/" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/users" element={<Users />} />
 

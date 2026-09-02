@@ -1,4 +1,5 @@
-import { useState, FormEvent, ChangeEvent } from "react";
+import { useState, type FormEvent, type ChangeEvent } from "react";
+import jsPDF from "jspdf";
 import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
 import "../styles/AgregarEmpleados.css"; // clases de layout: agregar-page / agregar-body / agregar-main
@@ -63,13 +64,75 @@ export default function Certificaciones() {
     return Object.keys(nuevosErrores).length === 0;
   };
 
+  // Convierte "yyyy-mm-dd" (formato del <input type="date">) a "dd/mm/yyyy" para mostrar
+  const formatearFecha = (fechaISO: string): string => {
+    if (!fechaISO) return "—";
+    const [anio, mes, dia] = fechaISO.split("-");
+    return `${dia}/${mes}/${anio}`;
+  };
+
+  const generarPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const anchoPagina = doc.internal.pageSize.getWidth();
+    const altoPagina = doc.internal.pageSize.getHeight();
+
+    // Borde decorativo
+    doc.setDrawColor(30, 58, 138); // azul Buydrax
+    doc.setLineWidth(1.2);
+    doc.rect(8, 8, anchoPagina - 16, altoPagina - 16);
+
+    // Encabezado
+    doc.setTextColor(30, 58, 138);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(26);
+    doc.text("BUYDRAX", anchoPagina / 2, 30, { align: "center" });
+
+    doc.setFontSize(16);
+    doc.setTextColor(245, 166, 35); // naranja
+    doc.text("Certificado de Certificación Laboral", anchoPagina / 2, 42, { align: "center" });
+
+    // Cuerpo
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(50, 50, 50);
+
+    const lineas = [
+      `Certificación: ${form.nombreCertificacion || "—"}`,
+      `Entidad que certifica: ${form.entidadCertifica || "—"}`,
+      `Estado de la certificación: ${form.estadoCertificacion || "—"}`,
+      `Fecha de obtención: ${formatearFecha(form.fechaObtencion)}`,
+      `Fecha de vencimiento: ${formatearFecha(form.fechaVencimiento)}`,
+    ];
+
+    let y = 65;
+    lineas.forEach((linea) => {
+      doc.text(linea, anchoPagina / 2, y, { align: "center" });
+      y += 10;
+    });
+
+    // Pie
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    const fechaEmision = new Date().toLocaleDateString("es-CO");
+    doc.text(`Documento generado automáticamente el ${fechaEmision}`, anchoPagina / 2, altoPagina - 15, {
+      align: "center",
+    });
+
+    const nombreArchivo = (form.nombreCertificacion || "certificacion")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // quita tildes
+      .replace(/[^a-z0-9]+/g, "-");
+
+    doc.save(`certificado-${nombreArchivo}.pdf`);
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     if (!validar()) return;
 
-    // TODO: Conectar con el endpoint real de creación/descarga de certificaciones
-    console.log("Certificación a registrar/descargar:", form);
+    generarPDF();
   };
 
   return (
