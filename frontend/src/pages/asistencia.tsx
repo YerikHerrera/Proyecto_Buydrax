@@ -38,7 +38,7 @@ export default function Asistencia() {
       <div className="asistencia-body">
         <Sidebar />
 
-        <main className="asistencia-main">
+        <main className="asistencia-main" style={{ border: "5px", minHeight: "300px" }}>
 
           {/* Breadcrumb */}
           <nav

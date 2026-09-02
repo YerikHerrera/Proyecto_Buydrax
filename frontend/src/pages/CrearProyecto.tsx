@@ -3,7 +3,7 @@ import FormField from "../components/ui/FormField";
 import SelectField from "../components/ui/SelectField";
 import Button from "../components/ui/Button";
 import { EMPLEADOS_MOCK } from "../data/empleados";
-import { ubicaciones } from "../data/ubicaciones";
+import { localidades } from "../data/localidades";
 import { PROYECTOS_MOCK } from "../data/proyectos";
 import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
@@ -12,7 +12,7 @@ import "../styles/CrearProyecto.css";
 type ProyectoForm = {
   nombre: string;
   supervisorId: string;
-  ubicacionId: string;
+  localidadID: string;
   fechaInicio: string;
   fechaFin: string;
   descripcion: string;
@@ -28,15 +28,15 @@ export default function CrearProyecto() {
   const { values, setField } = useForm<ProyectoForm>({
     nombre: "",
     supervisorId: "",
-    ubicacionId: "",
+    localidadID: "",
     fechaInicio: "",
     fechaFin: "",
     descripcion: "",
   });
 
   const handleGuardar = () => {
-    if (!values.nombre || !values.ubicacionId) {
-      alert("Completa al menos el nombre del proyecto y la ubicación");
+    if (!values.nombre || !values.localidadID) {
+      alert("Completa al menos el nombre del proyecto y la localidad");
       return;
     }
     console.log("Proyecto a guardar:", values);
@@ -69,7 +69,7 @@ export default function CrearProyecto() {
             <thead className="table-dark">
               <tr>
                 <th>Nombre</th>
-                <th>Ubicación</th>
+                <th>Localidad</th>
                 <th>Supervisor</th>
                 <th>Fecha inicio</th>
                 <th>Fecha fin</th>
@@ -79,7 +79,7 @@ export default function CrearProyecto() {
               {PROYECTOS_MOCK.map((p) => (
                 <tr key={p.id}>
                   <td>{p.nombre}</td>
-                  <td>{p.ubicacion}</td>
+                  <td>{p.localidad}</td>
                   <td>{p.supervisor}</td>
                   <td>{p.fechaInicio}</td>
                   <td>{p.fechaFin}</td>
@@ -123,12 +123,12 @@ export default function CrearProyecto() {
               placeholder="Seleccionar supervisor"
             />
             <SelectField
-              label="Ubicación"
+              label="Localidad"
               icon="bi-geo-alt"
-              value={values.ubicacionId}
-              onChange={(v) => setField("ubicacionId", v)}
-              options={ubicaciones.map((u) => ({ value: u.id, label: u.nombre }))}
-              placeholder="Seleccionar ubicación"
+              value={values.localidadID}
+              onChange={(v) => setField("localidadID", v)}
+              options={localidades.map((l) => ({ value: l.id, label: l.nombre }))}
+              placeholder="Seleccionar localidad"
             />
             <div>
               <label className="agregar-label">Descripción</label>
