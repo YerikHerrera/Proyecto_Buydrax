@@ -27,7 +27,7 @@ const menus: Record<string, { to: string; icon: string; label: string }[]> = {
   "/asistencia": [
     { to: "/asistencia", icon: "bi-calendar-check-fill", label: "Ver asistencia" },
     { to: "/asistencia/turno", icon: "bi-clock-fill", label: "Turnos" },
-    { to: "/asistencia/reporte", icon: "bi-file-earmark-text-fill", label: "Reporte" },
+    { to: "/asistencia/reporte", icon: "bi-file-earmark-text-fill", label: "Horas Extras" },
   ],
 };
 
