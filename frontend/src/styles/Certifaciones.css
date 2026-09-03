@@ -1,0 +1,209 @@
+/* Las clases de layout (agregar-page, agregar-body, agregar-main) viven en
+   AgregarEmpleados.css y se importan directamente en Certificaciones.tsx.
+   Este archivo solo contiene estilos propios de la sección Certificaciones. */
+
+.certificaciones-page {
+  max-width: 900px;
+}
+
+/* Breadcrumb */
+.certificaciones-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.certificaciones-breadcrumb-active {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+/* Card */
+.certificaciones-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  max-width: 900px;
+}
+
+.certificaciones-topbar {
+  height: 5px;
+  width: 100%;
+  background: linear-gradient(90deg, #7c3aed, #1e3a8a, #f5a623);
+}
+
+.certificaciones-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 32px 0 32px;
+}
+
+.certificaciones-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: #fdecd8;
+  color: #f5a623;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.certificaciones-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.certificaciones-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.certificaciones-divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 24px 0 0 0;
+}
+
+/* Grid de campos */
+.certificaciones-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 32px;
+  padding: 24px 32px;
+}
+
+.certificaciones-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.certificaciones-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Inputs / Selects */
+.certificaciones-select-wrapper,
+.certificaciones-input-wrapper,
+.certificaciones-file-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 14px;
+  transition: border-color 0.15s ease;
+}
+
+.certificaciones-select-wrapper:focus-within,
+.certificaciones-input-wrapper:focus-within {
+  border-color: #1e3a8a;
+}
+
+.certificaciones-select-wrapper i,
+.certificaciones-input-wrapper i {
+  color: #9ca3af;
+  font-size: 15px;
+}
+
+.certificaciones-select-wrapper select,
+.certificaciones-input-wrapper input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.certificaciones-select-wrapper select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.is-invalid {
+  outline: 1px solid #dc2626 !important;
+}
+
+.certificaciones-error {
+  font-size: 12px;
+  color: #dc2626;
+}
+
+/* Archivo */
+.certificaciones-file-wrapper {
+  position: relative;
+  justify-content: space-between;
+}
+
+.certificaciones-file-label {
+  flex: 1;
+  font-size: 14px;
+  color: #6b7280;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.certificaciones-file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.certificaciones-upload-icon {
+  color: #9ca3af !important;
+}
+
+/* Acciones */
+.certificaciones-actions {
+  display: flex;
+  justify-content: center;
+  padding: 8px 32px 32px 32px;
+}
+
+.certificaciones-btn-descargar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f5a623;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.certificaciones-btn-descargar:hover {
+  background-color: #e0951a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .certificaciones-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .certificaciones-page {
+    padding: 16px;
+  }
+}

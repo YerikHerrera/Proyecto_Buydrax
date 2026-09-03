@@ -1,11 +1,31 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import fondo from "../assets/login.jpg";
 import logo from "../assets/logoo.png";
+import Toast from "../components/ui/toast";
+import { useToast } from "../hooks/useToast";
 
 function Login() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { toast, showToast } = useToast();
 
   const handleLogin = () => {
+    const emailLimpio = email.trim();
+    const passwordLimpio = password.trim();
+
+    if (!emailLimpio || !passwordLimpio) {
+      showToast("Correo electrónico y contraseña son campos obligatorios");
+      return;
+    }
+
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpio);
+    if (!emailValido) {
+      showToast("Ingresa un correo electrónico válido");
+      return;
+    }
+
     localStorage.setItem("usuario", JSON.stringify({
       nombre: "Juan Pérez",
       cargo: "Administrador",
@@ -25,6 +45,8 @@ function Login() {
       justifyContent: "center",
       fontFamily: "'Segoe UI', sans-serif",
     }}>
+
+      {toast && <Toast message={toast.message} type={toast.type} />}
 
       {/* OVERLAY OSCURO */}
       <div style={{
@@ -50,31 +72,15 @@ function Login() {
         gap: "0px",
       }}>
 
-        {/* LOGO */}
-        <img
-          src={logo}
-          alt="Buydrax"
-          style={{ width: "130px", marginBottom: "8px" }}
-        />
+        <img src={logo} alt="Buydrax" style={{ width: "130px", marginBottom: "8px" }} />
 
-        {/* TÍTULOS */}
-        <h1 style={{
-          color: "#ffffff",
-          fontSize: "24px",
-          fontWeight: "700",
-          margin: "0 0 4px",
-        }}>
+        <h1 style={{ color: "#ffffff", fontSize: "24px", fontWeight: "700", margin: "0 0 4px" }}>
           Bienvenido a Buydrax
         </h1>
-        <p style={{
-          color: "rgba(255,255,255,0.4)",
-          fontSize: "13px",
-          marginBottom: "32px",
-        }}>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", marginBottom: "32px" }}>
           Ingresa tus credenciales para continuar
         </p>
 
-        {/* INPUTS */}
         <div style={{ width: "100%", marginBottom: "16px" }}>
           <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", letterSpacing: "0.5px", display: "block", marginBottom: "6px" }}>
             CORREO ELECTRÓNICO
@@ -82,16 +88,13 @@ function Login() {
           <input
             type="email"
             placeholder="correo@empresa.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="off"
             style={{
-              width: "100%",
-              padding: "12px 16px",
-              borderRadius: "10px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.05)",
-              color: "#fff",
-              fontSize: "14px",
-              outline: "none",
-              boxSizing: "border-box",
+              width: "100%", padding: "12px 16px", borderRadius: "10px",
+              border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)",
+              color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box",
             }}
           />
         </div>
@@ -103,30 +106,21 @@ function Login() {
           <input
             type="password"
             placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
             style={{
-              width: "100%",
-              padding: "12px 16px",
-              borderRadius: "10px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.05)",
-              color: "#fff",
-              fontSize: "14px",
-              outline: "none",
-              boxSizing: "border-box",
+              width: "100%", padding: "12px 16px", borderRadius: "10px",
+              border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)",
+              color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box",
             }}
           />
         </div>
 
-        {/* OLVIDASTE CONTRASEÑA */}
         <div style={{ width: "100%", textAlign: "right", marginBottom: "28px" }}>
           <span
             onClick={() => navigate("/forgot-password")}
-            style={{
-              color: "#2600ff",
-              fontSize: "12.5px",
-              cursor: "pointer",
-              textDecoration: "none",
-            }}
+            style={{ color: "#2600ff", fontSize: "12.5px", cursor: "pointer", textDecoration: "none" }}
             onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
             onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
           >
@@ -134,30 +128,16 @@ function Login() {
           </span>
         </div>
 
-        {/* BOTÓN */}
         <button
           onClick={handleLogin}
           style={{
-            width: "100%",
-            padding: "14px",
-            borderRadius: "10px",
-            border: "none",
+            width: "100%", padding: "14px", borderRadius: "10px", border: "none",
             background: "linear-gradient(135deg, #000000 0%, #0011ff 100%)",
-            color: "#fff",
-            fontSize: "15px",
-            fontWeight: "700",
-            letterSpacing: "0.5px",
-            cursor: "pointer",
+            color: "#fff", fontSize: "15px", fontWeight: "700", letterSpacing: "0.5px", cursor: "pointer",
             transition: "opacity 0.2s, transform 0.15s",
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.opacity = "0.9";
-            e.currentTarget.style.transform = "translateY(-1px)";
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.opacity = "1";
-            e.currentTarget.style.transform = "translateY(0)";
-          }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
         >
           Ingresar
         </button>
