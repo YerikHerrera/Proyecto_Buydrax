@@ -1,0 +1,17 @@
+.asistencia-page {
+  min-height: 100vh;
+  background-color: #F1F5F9;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.asistencia-body {
+  display: flex;
+  overflow: hidden; /* ← NUEVO: evita que Sidebar desborde */
+}
+
+.asistencia-main {
+  flex: 1;
+  padding: 28px 32px;
+  min-width: 0;
+  overflow: hidden; /* ← NUEVO */
+}

@@ -1,0 +1,28 @@
+.horas-extra-card {
+  position: relative;
+  padding-top: 6px;
+}
+
+.horas-extra-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(90deg, #2563eb, #7c3aed, #f97316);
+}
+
+.horas-extra-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #1E3A8A;
+  margin-bottom: 24px;
+}
