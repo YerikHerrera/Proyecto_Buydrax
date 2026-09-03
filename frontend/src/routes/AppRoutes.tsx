@@ -48,7 +48,9 @@ function AppRoutes() {
         <Route path="/reportes" element={<Reportes />} />
 
         //perfiles
-        <Route path="/perfiles" element={<Perfiles />} />
+        <Route path="/perfiles" element={<Perfiles />} /> 
+        //supervisores
+        <Route path="/proyectos/supervisor" element={<Supervisor />} />
       </Routes>
     </BrowserRouter>
   );
