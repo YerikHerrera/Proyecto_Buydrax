@@ -11,6 +11,8 @@ import Supervisor from "../pages/Supervisor";
 import Asistencia from "../pages/asistencia";
 import HorasExtras from "../pages/HorasExtras";
 import Certificaciones from "../pages/Certificaciones";
+import Reportes from "../pages/Reportes";
+import Perfiles from "../pages/Perfiles";
 
 /*Estas son las rutas que se utilizarán en la aplicación, define como se localiza cada elemento*/
 function AppRoutes() {
@@ -41,6 +43,12 @@ function AppRoutes() {
         {/* TODO: reemplazar por el componente real de Turnos cuando exista */}
         <Route path="/asistencia/turno" element={<Asistencia />} />
         <Route path="/asistencia/reporte" element={<HorasExtras />} />
+
+        //reportes
+        <Route path="/reportes" element={<Reportes />} />
+
+        //perfiles
+        <Route path="/perfiles" element={<Perfiles />} />
       </Routes>
     </BrowserRouter>
   );

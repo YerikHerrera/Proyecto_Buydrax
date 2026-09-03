@@ -22,14 +22,14 @@ function Reportes() {
   const [descripcion, setDescripcion] = useState("");
 
   const [reportes, setReportes] = useState<Reporte[]>(() => {
-    const reportesGuardados = localStorage.getItem("reportes");
+  const reportesGuardados = localStorage.getItem("reportes");
 
-    if (reportesGuardados) {
-      return JSON.parse(reportesGuardados);
-    }
+  if (reportesGuardados) {
+    return JSON.parse(reportesGuardados);
+  }
 
-    return [];
-  });
+  return [];
+});
 
   const [reporteEditando, setReporteEditando] = useState<number | null>(null);
 
