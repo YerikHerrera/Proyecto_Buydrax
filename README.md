@@ -1,73 +1,103 @@
-# React + TypeScript + Vite
+# Buydrax — Proyecto completo (Frontend + Backend + SQL)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Contenido
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+buydrax_completo/
+├── BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql   # Esquema + semillas
+├── SQL_RESET_PASSWORD_Admin123.sql       # Pone Admin123! a todos los usuarios
+├── backend/                              # API FastAPI
+└── frontend/                             # React + Vite (auth, listas, selects)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 1. Base de datos
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sql
+CREATE DATABASE buydrax;
 ```
+
+Conéctate a `buydrax` y ejecuta **en orden**:
+
+1. `BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql`
+2. `SQL_RESET_PASSWORD_Admin123.sql`  ← contraseña de prueba: **Admin123!**
+
+## 2. Backend
+
+```bash
+cd backend
+python -m venv .venv
+
+# Windows:
+.\.venv\Scripts\activate
+# Linux/Mac:
+source .venv/bin/activate
+
+pip install -r requirements.txt
+cp .env.example .env   # Windows: copy .env.example .env
+```
+
+Edita `.env`:
+
+```env
+DATABASE_URL=postgresql+psycopg2://USUARIO:PASSWORD@localhost:5432/buydrax
+SECRET_KEY=cambia-esta-clave-por-una-larga
+```
+
+Arranca:
+
+```bash
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+- Docs: http://127.0.0.1:8000/docs  
+- Health: http://127.0.0.1:8000/health  
+
+### Alternativa para resetear contraseñas desde Python
+
+```bash
+python scripts/set_passwords.py --password Admin123! --apply
+```
+
+## 3. Frontend
+
+```bash
+cd frontend
+npm install
+# opcional:
+echo "VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1" > .env
+npm run dev
+```
+
+Abre http://localhost:5173
+
+## 4. Login de prueba (después del SQL de reset)
+
+| Correo | Rol | Contraseña |
+|--------|-----|------------|
+| claudia.cardenas@construandes.com.co | ADMIN_RRHH | Admin123! |
+| laura.munoz@construandes.com.co | ADMIN_RRHH | Admin123! |
+| ricardo.gil@construandes.com.co | SUPERVISOR | Admin123! |
+
+## Correcciones incluidas en este paquete
+
+### Autenticación
+- Rutas protegidas (`ProtectedRoute`) — sin token redirige al login
+- Navbar usa el usuario real del login (ya no mocks)
+- Logout limpia token + usuario
+- apiClient redirige en 401 y muestra error si el backend no está
+- Login mapea `rol` desde `usuario.rol` o `usuario.perfil.nombre`
+
+### Validaciones / datos
+- Listas y asignación usan API (empleados/proyectos reales)
+- Selects de cargos, EPS, ARL, fondos, cajas, bancos alineados a la BD
+- Contraseña de semillas conocida (`Admin123!`) vía script SQL
+
+### Sidebar
+- Drawer responsive en móvil (no se rompe el layout)
+
+## Orden al arrancar
+
+1. PostgreSQL  
+2. Backend (`uvicorn ... --port 8000`)  
+3. Frontend (`npm run dev`)  
+4. Navegador → login con **Admin123!**  

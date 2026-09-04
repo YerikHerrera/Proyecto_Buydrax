@@ -1,9 +1,0 @@
-from sqlalchemy.orm import Session
-from app import models, schemas
-
-def create_usuario(db: Session, usuario: schemas.UsuarioCreate):
-    db_usuario = models.Usuario(**usuario.model_dump())
-    db.add(db_usuario)
-    db.commit()
-    db.refresh(db_usuario)
-    return db_usuario
