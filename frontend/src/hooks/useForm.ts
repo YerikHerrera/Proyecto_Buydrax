@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export function useForm<T extends Record<string, any>>(initialValues: T) {
+export function useForm<T extends Record<string, unknown>>(initialValues: T) {
   const [values, setValues] = useState<T>(initialValues);
 
   const setField = <K extends keyof T>(field: K, value: T[K]) => {

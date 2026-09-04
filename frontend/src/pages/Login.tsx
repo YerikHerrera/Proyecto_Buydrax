@@ -2,16 +2,18 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import fondo from "../assets/login.jpg";
 import logo from "../assets/logoo.png";
-import Toast from "../components/ui/toast";
+import Toast from "../components/ui/Toast";
 import { useToast } from "../hooks/useToast";
+import { login } from "../services/authService";
 
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const { toast, showToast } = useToast();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const emailLimpio = email.trim();
     const passwordLimpio = password.trim();
 
@@ -26,12 +28,17 @@ function Login() {
       return;
     }
 
-    localStorage.setItem("usuario", JSON.stringify({
-      nombre: "Juan Pérez",
-      cargo: "Administrador",
-      email: "juan@buydrax.com"
-    }));
-    navigate("/dashboard");
+    try {
+      setLoading(true);
+      await login(emailLimpio, passwordLimpio);
+      showToast("Inicio de sesión exitoso");
+      navigate("/dashboard");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "No se pudo iniciar sesión";
+      showToast(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -130,16 +137,17 @@ function Login() {
 
         <button
           onClick={handleLogin}
+          disabled={loading}
           style={{
             width: "100%", padding: "14px", borderRadius: "10px", border: "none",
             background: "linear-gradient(135deg, #000000 0%, #0011ff 100%)",
-            color: "#fff", fontSize: "15px", fontWeight: "700", letterSpacing: "0.5px", cursor: "pointer",
+            color: "#fff", fontSize: "15px", fontWeight: "700", letterSpacing: "0.5px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.7 : 1,
             transition: "opacity 0.2s, transform 0.15s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
         >
-          Ingresar
+          {loading ? "Ingresando..." : "Ingresar"}
         </button>
 
       </div>

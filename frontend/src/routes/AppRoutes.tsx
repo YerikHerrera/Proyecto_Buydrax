@@ -16,50 +16,188 @@ import Perfiles from "../pages/Perfiles";
 import Nomina from "../pages/Nomina";
 import RegistrarEmpleado from "../pages/RegistrarEmpleado";
 import BuscarEmpleado from "../pages/BuscarEmpleado";
+import EditarEmpleado from "../pages/EditarEmpleado";
 import Turnos from "../pages/Turnos";
+import Aprobaciones from "../pages/Aprobaciones";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-/*Estas son las rutas que se utilizarán en la aplicación, define como se localiza cada elemento*/
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas de autenticación */}
+        {/* Rutas públicas */}
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/users" element={<Users />} />
+
+        {/* Rutas protegidas: requieren token JWT */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <Users />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Empleados */}
-        <Route path="/empleados" element={<ListaEmpleados />} />
-        <Route path="/empleados/lista" element={<ListaEmpleados />} />
-        <Route path="/empleados/agregar" element={<AgregarEmpleados />} />
-        <Route path="/empleados/registrar" element={<RegistrarEmpleado />} />
-        <Route path="/empleados/buscar" element={<BuscarEmpleado />} />
-        {/* TODO: reemplazar por el componente real de Perfiles cuando exista */}
-        <Route path="/empleados/cargos" element={<ListaEmpleados />} />
-        <Route path="/empleados/documentos" element={<Certificaciones />} />
+        <Route
+          path="/empleados"
+          element={
+            <ProtectedRoute>
+              <ListaEmpleados />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/lista"
+          element={
+            <ProtectedRoute>
+              <ListaEmpleados />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/agregar"
+          element={
+            <ProtectedRoute>
+              <AgregarEmpleados />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/editar/:id"
+          element={
+            <ProtectedRoute>
+              <EditarEmpleado />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/registrar"
+          element={
+            <ProtectedRoute>
+              <RegistrarEmpleado />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/buscar"
+          element={
+            <ProtectedRoute>
+              <BuscarEmpleado />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/cargos"
+          element={
+            <ProtectedRoute>
+              <ListaEmpleados />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empleados/documentos"
+          element={
+            <ProtectedRoute>
+              <Certificaciones />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Proyectos */}
-        <Route path="/proyectos" element={<CrearProyecto />} />
-        <Route path="/proyectos/asignacion" element={<AsignacionEmpleado />} />
-        <Route path="/proyectos/supervisor" element={<Supervisor />} />
+        <Route
+          path="/proyectos"
+          element={
+            <ProtectedRoute>
+              <CrearProyecto />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/proyectos/asignacion"
+          element={
+            <ProtectedRoute>
+              <AsignacionEmpleado />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/proyectos/supervisor"
+          element={
+            <ProtectedRoute>
+              <Supervisor />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Asistencia */}
-        <Route path="/asistencia" element={<Asistencia />} />
-        {/* TODO: reemplazar por el componente real de Turnos cuando exista */}
-        <Route path="/asistencia/turno" element={<Turnos />} />
-        <Route path="/asistencia/reporte" element={<HorasExtras />} />
+        <Route
+          path="/asistencia"
+          element={
+            <ProtectedRoute>
+              <Asistencia />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/asistencia/turno"
+          element={
+            <ProtectedRoute>
+              <Turnos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/asistencia/reporte"
+          element={
+            <ProtectedRoute>
+              <HorasExtras />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/asistencia/validaciones"
+          element={
+            <ProtectedRoute>
+              <Aprobaciones />
+            </ProtectedRoute>
+          }
+        />
 
-        //reportes
-        <Route path="/reportes" element={<Reportes />} />
-
-        {/* Nómina */}
-        <Route path="/nomina" element={<Nomina />} />
-
-        //perfiles
-        <Route path="/perfiles" element={<Perfiles />} /> 
-        //supervisores
-        <Route path="/proyectos/supervisor" element={<Supervisor />} />
+        {/* Reportes / Nómina / Perfiles */}
+        <Route
+          path="/reportes"
+          element={
+            <ProtectedRoute>
+              <Reportes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/nomina"
+          element={
+            <ProtectedRoute>
+              <Nomina />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/perfiles"
+          element={
+            <ProtectedRoute>
+              <Perfiles />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

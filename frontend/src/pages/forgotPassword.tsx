@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logobuydrax.png";
-import "../styles/ForgotPassword.css";
+import "../styles/forgotPassword.css";
 
 type EstadoEnvio = "idle" | "enviando" | "enviado" | "error";
 
