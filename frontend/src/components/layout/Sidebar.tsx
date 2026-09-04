@@ -1,109 +1,175 @@
 import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-const menus: Record<string, { to: string; icon: string; label: string }[]> = {
-  "/dashboard": [
-    { to: "/dashboard", icon: "bi-house-fill", label: "Inicio" },
-    { to: "/nomina", icon: "bi-cash-stack", label: "Nómina" },
-    { to: "/reportes", icon: "bi-bar-chart-fill", label: "Reportes" },
-  ],
-
-  "/empleados": [
-    { to: "/empleados", icon: "bi-people-fill", label: "Lista de empleados" },
-    {
-      to: "/empleados/agregar",
-      icon: "bi-person-plus-fill",
-      label: "Registro Empleados",
-    },
-    {
-      to: "/empleados/registrar",
-      icon: "bi-person-add",
-      label: "Registrar empleado",
-    },
-    {
-      to: "/empleados/buscar",
-      icon: "bi-search",
-      label: "Buscar empleado",
-    },
-    {
-      to: "/perfiles",
-      icon: "bi-briefcase-fill",
-      label: "Perfiles",
-    },
-    {
-      to: "/empleados/documentos",
-      icon: "bi-folder-fill",
-      label: "Certificaciones",
-    },
-  ],
-
-  "/proyectos": [
-    {
-      to: "/proyectos",
-      icon: "bi-folder-plus",
-      label: "Crear proyecto",
-    },
-    {
-      to: "/proyectos/asignacion",
-      icon: "bi-people-fill",
-      label: "Asignación empleado",
-    },
-    {
-      to: "/proyectos/supervisor",
-      icon: "bi-person-check-fill",
-      label: "Supervisor",
-    },
-  ],
-
-  "/asistencia": [
-    {
-      to: "/asistencia",
-      icon: "bi-calendar-check-fill",
-      label: "Ver asistencia",
-    },
-    {
-      to: "/asistencia/turno",
-      icon: "bi-clock-fill",
-      label: "Turnos",
-    },
-    {
-      to: "/asistencia/reporte",
-      icon: "bi-file-earmark-text-fill",
-      label: "Horas Extras",
-    },
-  ],
+type SubItem = { to: string; label: string };
+type Item = {
+  to: string;
+  icon: string;
+  label: string;
+  match: (p: string) => boolean;
+  children?: SubItem[];
 };
+
+/**
+ * Menú único en toda la app:
+ * - mismas secciones siempre
+ * - subpáginas siempre accesibles (no desaparecen al navegar)
+ */
+const MENU: Item[] = [
+  {
+    to: "/dashboard",
+    icon: "bi-house-fill",
+    label: "Inicio",
+    match: (p) => p === "/dashboard",
+  },
+  {
+    to: "/empleados",
+    icon: "bi-people-fill",
+    label: "Empleados",
+    match: (p) => p.startsWith("/empleados") || p === "/perfiles",
+    children: [
+      { to: "/empleados", label: "Lista" },
+      { to: "/empleados/registrar", label: "1. Cuenta usuario" },
+      { to: "/empleados/agregar", label: "2. Perfil laboral" },
+      { to: "/empleados/buscar", label: "Buscar" },
+      { to: "/empleados/documentos", label: "Certificaciones" },
+      { to: "/perfiles", label: "Ficha rápida" },
+    ],
+  },
+  {
+    to: "/proyectos",
+    icon: "bi-folder-fill",
+    label: "Proyectos",
+    match: (p) => p.startsWith("/proyectos"),
+    children: [
+      { to: "/proyectos", label: "Listar / crear" },
+      { to: "/proyectos/asignacion", label: "Asignación" },
+      { to: "/proyectos/supervisor", label: "Supervisores" },
+    ],
+  },
+  {
+    to: "/asistencia",
+    icon: "bi-calendar-check-fill",
+    label: "Asistencia",
+    match: (p) => p.startsWith("/asistencia"),
+    children: [
+      { to: "/asistencia", label: "Registrar asistencia" },
+      { to: "/asistencia/turno", label: "Turnos" },
+      { to: "/asistencia/reporte", label: "Horas extras" },
+      { to: "/asistencia/validaciones", label: "Validar / aprobar" },
+    ],
+  },
+  {
+    to: "/nomina",
+    icon: "bi-cash-stack",
+    label: "Nómina",
+    match: (p) => p.startsWith("/nomina"),
+  },
+  {
+    to: "/reportes",
+    icon: "bi-bar-chart-fill",
+    label: "Reportes",
+    match: (p) => p.startsWith("/reportes"),
+  },
+];
 
 export default function Sidebar() {
   const location = useLocation();
+  const [abierto, setAbierto] = useState(false);
+  /** Secciones expandidas: por defecto la activa + todas las que tengan hijos visibles */
+  const [expandidas, setExpandidas] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    MENU.forEach((m) => {
+      if (m.children?.length) init[m.to] = true; // todas abiertas para no “perder” subpáginas
+    });
+    return init;
+  });
 
-  let seccion = "/" + location.pathname.split("/")[1];
+  useEffect(() => {
+    setAbierto(false);
+  }, [location.pathname]);
 
-  // Perfiles pertenece a la sección de Empleados
-  if (location.pathname === "/perfiles") {
-    seccion = "/empleados";
-  }
-
-  const items = menus[seccion] || menus["/dashboard"];
+  const toggle = (key: string) => {
+    setExpandidas((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
-    <div className="sidebar-nav">
-      {items.map((item) => (
-        <Link
-          key={item.to}
-          to={item.to}
-          className={`sidebar-link ${
-            location.pathname === item.to
-              ? "sidebar-link--active"
-              : ""
-          }`}
-        >
-          <i className={`bi ${item.icon}`}></i>
+    <>
+      <button
+        type="button"
+        className="sidebar-toggle"
+        aria-label="Abrir menú"
+        onClick={() => setAbierto((v) => !v)}
+      >
+        <i className={`bi ${abierto ? "bi-x-lg" : "bi-list"}`}></i>
+      </button>
 
-          <span className="sidebar-label">
-            {item.label}
-          </span>
-        </Link>
-      ))}
-    </div>
+      {abierto && (
+        <div className="sidebar-overlay" onClick={() => setAbierto(false)} aria-hidden />
+      )}
+
+      <aside className={`sidebar-nav ${abierto ? "sidebar-nav--open" : ""}`}>
+        <div className="sidebar-nav__header">
+          <span>Navegación</span>
+          <button
+            type="button"
+            className="sidebar-close"
+            onClick={() => setAbierto(false)}
+            aria-label="Cerrar"
+          >
+            <i className="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        {MENU.map((item) => {
+          const active = item.match(location.pathname);
+          const hasChildren = Boolean(item.children?.length);
+          const open = expandidas[item.to] ?? true;
+
+          return (
+            <div key={item.to} className="sidebar-group">
+              <div className="sidebar-group__row">
+                <Link
+                  to={item.to}
+                  className={`sidebar-link ${active ? "sidebar-link--active" : ""}`}
+                  onClick={() => setAbierto(false)}
+                >
+                  <i className={`bi ${item.icon}`}></i>
+                  <span className="sidebar-label">{item.label}</span>
+                </Link>
+                {hasChildren && (
+                  <button
+                    type="button"
+                    className="sidebar-group__chevron"
+                    aria-label={open ? "Contraer" : "Expandir"}
+                    onClick={() => toggle(item.to)}
+                  >
+                    <i className={`bi ${open ? "bi-chevron-up" : "bi-chevron-down"}`}></i>
+                  </button>
+                )}
+              </div>
+
+              {hasChildren && open && (
+                <div className="sidebar-sub">
+                  {item.children!.map((sub) => {
+                    const subActive = location.pathname === sub.to;
+                    return (
+                      <Link
+                        key={sub.to}
+                        to={sub.to}
+                        className={`sidebar-sublink ${subActive ? "sidebar-sublink--active" : ""}`}
+                        onClick={() => setAbierto(false)}
+                      >
+                        {sub.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </aside>
+    </>
   );
 }

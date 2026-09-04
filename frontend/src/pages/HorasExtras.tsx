@@ -1,144 +1,128 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "../hooks/useForm";
-import FormField from "../components/ui/FormField";
-import SelectField from "../components/ui/SelectField";
-import Button from "../components/ui/Button";
-import { EMPLEADOS_MOCK } from "../data/empleados";
-import { motivosHorasExtras } from "../data/motivosExtras";
-import Navbar from "../components/layout/Navbar";
-import Sidebar from "../components/layout/Sidebar";
+import AppShell from "../components/layout/AppShell";
+import Breadcrumb from "../components/layout/Breadcrumb";
+import { listarEmpleados, type Empleado } from "../services/empleadosService";
+import { listarUsuarios, nombreUsuario, type UsuarioPublic } from "../services/usuariosService";
+import { apiRequest } from "../services/apiClient";
 import "../styles/HorasExtras.css";
 
-type HorasExtraForm = {
-  empleadoId: string;
-  motivo: string;
-  fecha: string;
-  certificado: string;
-  cantidadHoras: string;
-};
-
-const CERTIFICADO_OPCIONES = [
-  { id: "si", nombre: "Sí" },
-  { id: "no", nombre: "No" },
-];
+const TIPOS = ["DIURNA", "NOCTURNA", "DOMINICAL", "FESTIVA", "DIURNA_DOMINICAL"];
 
 export default function HorasExtras() {
   const navigate = useNavigate();
-  const { values, setField } = useForm<HorasExtraForm>({
-    empleadoId: "",
-    motivo: "",
-    fecha: "",
-    certificado: "",
-    cantidadHoras: "",
-  });
+  const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [usuariosMap, setUsuariosMap] = useState<Record<number, UsuarioPublic>>({});
+  const [empleadoId, setEmpleadoId] = useState("");
+  const [motivo, setMotivo] = useState("");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [cantidad, setCantidad] = useState("");
+  const [tipoHora, setTipoHora] = useState("DIURNA");
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleGuardar = () => {
-    if (!values.empleadoId || !values.fecha || !values.cantidadHoras) {
-      alert("Completa empleado, fecha y cantidad de horas");
-      return;
-    }
-    console.log("Horas extra a guardar:", values);
-    // luego: aquí va la llamada al servicio/API que guarde el registro
+  useEffect(() => {
+    listarEmpleados({ estado: "ACTIVO" })
+      .then((d) => setEmpleados(Array.isArray(d) ? d : []))
+      .catch((e) => setError(e instanceof Error ? e.message : "Error"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const labelEmp = (e: Empleado) => {
+    const u = usuariosMap[e.id_usuario];
+    if (u) return nombreUsuario(u);
+    return `${e.cargo} · ${e.numero_documento}`;
   };
 
-  const handleCancelar = () => {
-    navigate("/asistencia");
+  const guardar = async () => {
+    if (!empleadoId || !motivo || !fechaInicio || !fechaFin || !cantidad) {
+      setError("Completa todos los campos obligatorios.");
+      return;
+    }
+    try {
+      setSaving(true);
+      setError("");
+      setOk("");
+      // Backend real: POST /empleados/{id}/horas-extra (no POST /horas-extra)
+      await apiRequest(`/empleados/${Number(empleadoId)}/horas-extra`, {
+        method: "POST",
+        body: JSON.stringify({
+          motivo: motivo.trim(),
+          fecha_inicio: fechaInicio,
+          fecha_fin: fechaFin,
+          cantidad_horas: Number(cantidad),
+          tipo_hora: tipoHora,
+          archivo_soporte_url: "/soportes/he_pendiente.pdf",
+        }),
+      });
+      setOk("Horas extras registradas (pendientes de aprobación).");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="agregar-page">
-      <Navbar />
-      <div className="agregar-body">
-        <Sidebar />
-
-        <main className="agregar-main">
-          {/* Breadcrumb */}
-          <nav style={{ fontSize: "13px", color: "#94A3B8", marginBottom: "20px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <i className="bi bi-house-fill" style={{ color: "#1E3A8A" }}></i>
-            <span>›</span>
-            <span>Asistencia</span>
-            <span>›</span>
-            <span style={{ color: "#1E3A8A", fontWeight: 600 }}>Horas Extras</span>
-          </nav>
-
-          {/* HEADER con barra de degradado arriba de la card, como en el mockup */}
-          <div className="horas-extra-card">
-            <div className="agregar-header">
-              <div className="agregar-icono-circulo">
-                <i className="bi bi-clock-history" style={{ fontSize: "22px", color: "#1E3A8A" }}></i>
-              </div>
-              <div>
-                <h2 className="agregar-titulo">Horas Extras</h2>
-                <p style={{ margin: 0, fontSize: "13px", color: "#888" }}>
-                  Registra las horas extras realizadas por el empleado.
-                </p>
-              </div>
-            </div>
-
-            <hr style={{ marginBottom: "32px", borderColor: "#e0e0e0" }} />
-
-            <div className="agregar-form">
-              <SelectField
-                label="Nombre del Empleado"
-                icon="bi-person"
-                value={values.empleadoId}
-                onChange={(v) => setField("empleadoId", v)}
-                options={EMPLEADOS_MOCK.map((e) => ({ value: String(e.id), label: e.nombre }))}
-                placeholder="Selecciona un empleado"
-              />
-
-              <SelectField
-                label="Motivo"
-                icon="bi-file-earmark-text"
-                value={values.motivo}
-                onChange={(v) => setField("motivo", v)}
-                options={motivosHorasExtras.map((m) => ({ value: m.id, label: m.nombre }))}
-                placeholder="Selecciona un motivo"
-              />
-
-              <FormField
-                label="Fecha"
-                icon="bi-calendar"
-                type="date"
-                value={values.fecha}
-                onChange={(e) => setField("fecha", e.target.value)}
-              />
-
-              <SelectField
-                label="Certificado horas extra"
-                icon="bi-file-earmark-text"
-                value={values.certificado}
-                onChange={(v) => setField("certificado", v)}
-                options={CERTIFICADO_OPCIONES.map((c) => ({ value: c.id, label: c.nombre }))}
-                placeholder="Selecciona una opción"
-              />
-
-              <FormField
-                label="Cantidad de horas"
-                icon="bi-clock"
-                type="number"
-                min={0}
-                placeholder="Ingresa la cantidad de horas"
-                value={values.cantidadHoras}
-                onChange={(e) => setField("cantidadHoras", e.target.value)}
-              />
-            </div>
-
-            {/* Aviso informativo */}
-            <div className="horas-extra-aviso">
-              <i className="bi bi-info-circle-fill"></i>
-              <div>
-                <strong>Importante:</strong> Asegúrate de que la información sea correcta antes de guardar el registro.
-              </div>
-            </div>
-
-            <div className="agregar-botones">
-              <Button text="Cancelar" icon="bi-arrow-left" variant="secundario" onClick={handleCancelar} />
-              <Button text="Guardar registro horas extras" icon="bi-floppy" onClick={handleGuardar} />
-            </div>
+    <AppShell>
+      <Breadcrumb
+        items={[
+          { label: "Asistencia", to: "/asistencia" },
+          { label: "Horas extras" },
+        ]}
+      />
+      <div className="page-card">
+        <h1 className="page-title">Horas extras</h1>
+        <p className="page-subtitle">Registro alineado a la API (estado PENDIENTE).</p>
+        {error && <p style={{ color: "#b00020" }}>{error}</p>}
+        {ok && <p style={{ color: "#047857" }}>{ok}</p>}
+        <div className="agregar-form" style={{ marginTop: 16 }}>
+          <div>
+            <label className="agregar-label">Empleado *</label>
+            <select className="agregar-input" value={empleadoId} onChange={(e) => setEmpleadoId(e.target.value)} disabled={loading}>
+              <option value="">Seleccionar</option>
+              {empleados.map((e) => (
+                <option key={e.id_empleado} value={e.id_empleado}>{labelEmp(e)}</option>
+              ))}
+            </select>
           </div>
-        </main>
+          <div>
+            <label className="agregar-label">Motivo *</label>
+            <input className="agregar-input" value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={255} />
+          </div>
+          <div>
+            <label className="agregar-label">Fecha inicio *</label>
+            <input className="agregar-input" type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
+          </div>
+          <div>
+            <label className="agregar-label">Fecha fin *</label>
+            <input className="agregar-input" type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+          </div>
+          <div>
+            <label className="agregar-label">Cantidad de horas *</label>
+            <input className="agregar-input" type="number" min="0.5" step="0.5" value={cantidad} onChange={(e) => setCantidad(e.target.value)} />
+          </div>
+          <div>
+            <label className="agregar-label">Tipo de hora</label>
+            <select className="agregar-input" value={tipoHora} onChange={(e) => setTipoHora(e.target.value)}>
+              {TIPOS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="agregar-botones" style={{ marginTop: 20 }}>
+          <button className="agregar-btn-secundario" type="button" onClick={() => navigate("/asistencia")}>
+            Volver
+          </button>
+          <button className="agregar-btn-primario" type="button" onClick={guardar} disabled={saving || loading}>
+            {saving ? "Guardando…" : "Guardar horas extras"}
+          </button>
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

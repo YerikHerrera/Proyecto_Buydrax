@@ -1,147 +1,108 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/layout/Navbar";
-import Sidebar from "../components/layout/Sidebar";
-import { EMPLEADOS_MOCK } from "../data/empleados";
+import AppShell from "../components/layout/AppShell";
+import Breadcrumb from "../components/layout/Breadcrumb";
+import { apiRequest } from "../services/apiClient";
+import { getDashboard, type DashboardData } from "../services/dashboardService";
 import "../styles/Nomina.css";
 
+type NominaRow = {
+  id_nomina: number;
+  periodo_inicio: string;
+  periodo_fin: string;
+  tipo_nomina: string;
+  estado_nomina: string;
+  total_pagado?: number;
+  cantidad_empleados?: number;
+};
+
 export default function Nomina() {
-  const [periodo, setPeriodo] = useState("Mayo 2025");
-  const [busqueda, setBusqueda] = useState("");
+  const [stats, setStats] = useState<DashboardData | null>(null);
+  const [nominas, setNominas] = useState<NominaRow[]>([]);
+  const [error, setError] = useState("");
 
-  const empleados = useMemo(
-    () =>
-      EMPLEADOS_MOCK.filter((empleado) =>
-        empleado.nombre.toLowerCase().includes(busqueda.toLowerCase())
-      ),
-    [busqueda]
-  );
-
-  const totalNomina = 215450000;
-  const totalHorasExtras = 186.5;
+  useEffect(() => {
+    getDashboard().then(setStats).catch(() => {});
+    apiRequest<NominaRow[]>("/nominas")
+      .then((d) => setNominas(Array.isArray(d) ? d : []))
+      .catch((e) => setError(e instanceof Error ? e.message : "No se pudo cargar nómina"));
+  }, []);
 
   return (
-    <div className="nomina-page">
-      <Navbar />
-      <div className="nomina-body">
-        <Sidebar />
-        <main className="nomina-main">
-          <div className="nomina-breadcrumb">
-            <i className="bi bi-house-fill"></i>
-            <span>›</span>
-            <span>Nómina</span>
-            <span>›</span>
-            <strong>Gestión de nómina</strong>
-          </div>
-
-          <div className="nomina-topbar">
+    <AppShell>
+      <Breadcrumb items={[{ label: "Nómina" }]} />
+      <div className="page-card" style={{ marginBottom: 20 }}>
+        <h1 className="page-title">Gestión de nómina</h1>
+        <p className="page-subtitle">Datos desde API (no mock).</p>
+        {error && <p style={{ color: "#b00020" }}>{error}</p>}
+        <div className="nomina-summary-grid" style={{ marginTop: 16 }}>
+          <div className="nomina-summary-card">
+            <div className="nomina-summary-icon blue"><i className="bi bi-people-fill"></i></div>
             <div>
-              <p className="nomina-eyebrow">GESTIÓN DE PERSONAL</p>
-              <h1>Gestión de Nómina</h1>
-              <p>Administra y consulta la nómina de la empresa de forma rápida y segura.</p>
-            </div>
-
-            <div className="nomina-periodo">
-              <i className="bi bi-calendar3"></i>
-              <select value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
-                <option>Mayo 2025</option>
-                <option>Abril 2025</option>
-                <option>Marzo 2025</option>
-              </select>
-              <i className="bi bi-chevron-down"></i>
+              <span>Empleados activos</span>
+              <strong>{stats?.empleados_activos ?? "—"}</strong>
+              <Link to="/empleados"><small>Ver empleados →</small></Link>
             </div>
           </div>
-
-          <div className="nomina-summary-grid">
-            <div className="nomina-summary-card">
-              <div className="nomina-summary-icon blue"><i className="bi bi-people-fill"></i></div>
-              <div><span>Empleados activos</span><strong>{empleados.length + 118}</strong><small>Ver empleados →</small></div>
-            </div>
-            <div className="nomina-summary-card">
-              <div className="nomina-summary-icon green"><i className="bi bi-cash-stack"></i></div>
-              <div><span>Costo total nómina</span><strong>$ {totalNomina.toLocaleString("es-CO")}</strong><small>Ver detalles →</small></div>
-            </div>
-            <div className="nomina-summary-card">
-              <div className="nomina-summary-icon orange"><i className="bi bi-clock-fill"></i></div>
-              <div><span>Horas extra del mes</span><strong>{totalHorasExtras} h</strong><small>Ver horas extra →</small></div>
-            </div>
-            <div className="nomina-summary-card">
-              <div className="nomina-summary-icon purple"><i className="bi bi-file-earmark-text-fill"></i></div>
-              <div><span>Nóminas pendientes</span><strong>5</strong><small>Generar nómina →</small></div>
+          <div className="nomina-summary-card">
+            <div className="nomina-summary-icon orange"><i className="bi bi-clock-fill"></i></div>
+            <div>
+              <span>Horas extra pend.</span>
+              <strong>{stats?.horas_extra_pendientes ?? "—"}</strong>
+              <Link to="/asistencia/reporte"><small>Ver horas extra →</small></Link>
             </div>
           </div>
-
-          <div className="nomina-actions-grid">
-            <Link to="/empleados" className="nomina-action-card orange-card">
-              <i className="bi bi-people-fill"></i>
-              <strong>Empleados</strong>
-              <span>Gestiona la información y novedades del personal.</span>
-              <b>Ir a empleados →</b>
-            </Link>
-            <Link to="/nomina" className="nomina-action-card green-card">
-              <i className="bi bi-cash-coin"></i>
-              <strong>Nómina</strong>
-              <span>Administra y procesa la nómina de la empresa.</span>
-              <b>Gestión de nómina →</b>
-            </Link>
-            <Link to="/reportes" className="nomina-action-card blue-card">
-              <i className="bi bi-bar-chart-fill"></i>
-              <strong>Reportes</strong>
-              <span>Consulta reportes y análisis clave de la información.</span>
-              <b>Ir a reportes →</b>
-            </Link>
+          <div className="nomina-summary-card">
+            <div className="nomina-summary-icon purple"><i className="bi bi-file-earmark-text-fill"></i></div>
+            <div>
+              <span>Nóminas borrador</span>
+              <strong>{stats?.nominas_borrador ?? "—"}</strong>
+            </div>
           </div>
-
-          <section className="nomina-table-card">
-            <div className="nomina-table-header">
-              <div>
-                <h2>Personal y novedades de nómina</h2>
-                <p>Consulta los empleados incluidos en el periodo seleccionado.</p>
-              </div>
-              <div className="nomina-search">
-                <i className="bi bi-search"></i>
-                <input
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar empleado..."
-                />
-              </div>
-            </div>
-
-            <div className="nomina-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Empleado</th>
-                    <th>Cargo</th>
-                    <th>Documento</th>
-                    <th>Horas</th>
-                    <th>Horas extra</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {empleados.map((empleado, index) => (
-                    <tr key={empleado.id}>
-                      <td>
-                        <div className="nomina-person">
-                          <span style={{ backgroundColor: empleado.color }}>{empleado.nombre.charAt(0)}</span>
-                          <div><strong>{empleado.nombre}</strong><small>{empleado.telefono}</small></div>
-                        </div>
-                      </td>
-                      <td>{empleado.cargo}</td>
-                      <td>{empleado.tipoDoc} {empleado.numDoc}</td>
-                      <td>120 h</td>
-                      <td>{index % 2 === 0 ? "12 h" : "8 h"}</td>
-                      <td><span className="nomina-status">Procesada</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </main>
+        </div>
       </div>
-    </div>
+
+      <div className="page-card">
+        <h2 style={{ marginTop: 0, fontSize: 16 }}>Nóminas registradas</h2>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
+                <th style={{ padding: 10 }}>ID</th>
+                <th style={{ padding: 10 }}>Periodo</th>
+                <th style={{ padding: 10 }}>Tipo</th>
+                <th style={{ padding: 10 }}>Estado</th>
+                <th style={{ padding: 10 }}>Empleados</th>
+                <th style={{ padding: 10 }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nominas.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>
+                    No hay nóminas o el endpoint no respondió datos.
+                  </td>
+                </tr>
+              ) : (
+                nominas.map((n) => (
+                  <tr key={n.id_nomina} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: 10 }}>{n.id_nomina}</td>
+                    <td style={{ padding: 10 }}>{n.periodo_inicio} → {n.periodo_fin}</td>
+                    <td style={{ padding: 10 }}>{n.tipo_nomina}</td>
+                    <td style={{ padding: 10 }}>{n.estado_nomina}</td>
+                    <td style={{ padding: 10 }}>{n.cantidad_empleados ?? "—"}</td>
+                    <td style={{ padding: 10 }}>
+                      {n.total_pagado != null
+                        ? Number(n.total_pagado).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })
+                        : "—"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </AppShell>
   );
 }

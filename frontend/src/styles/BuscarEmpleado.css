@@ -1,1 +1,45 @@
 .buscar-page{min-height:100vh;background:#f4f6fb;font-family:'Segoe UI',sans-serif}.buscar-body{display:flex}.buscar-main{flex:1;min-width:0;padding:28px 32px}.buscar-breadcrumb{display:flex;gap:7px;align-items:center;color:#94a3b8;font-size:13px;margin-bottom:22px}.buscar-breadcrumb i{color:#1e3a8a}.buscar-breadcrumb strong{color:#1e3a8a}.buscar-stepper{max-width:740px;margin:0 auto 28px;display:flex;align-items:center}.buscar-step{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:110px;color:#94a3b8;font-size:11px}.buscar-step span{width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid #dbe3ee;display:flex;align-items:center;justify-content:center;font-weight:800}.buscar-step.activo{color:#1e3a8a}.buscar-step.activo span{border-color:#1e3a8a;background:#1e3a8a;color:#fff}.buscar-step.completado span{border-color:#16a34a;background:#16a34a;color:#fff}.buscar-linea{height:2px;background:#e2e8f0;flex:1}.buscar-card,.buscar-resultado-card{max-width:760px;margin:0 auto;background:#fff;border-radius:16px;padding:28px;box-shadow:0 4px 20px rgba(15,23,42,.06)}.buscar-title{display:flex;align-items:center;gap:14px;margin-bottom:24px}.buscar-icono{width:50px;height:50px;border-radius:14px;background:#eaf0ff;color:#1e3a8a;display:flex;align-items:center;justify-content:center;font-size:21px}.buscar-title h1,.buscar-result-header h1{margin:0;color:#172554;font-size:23px}.buscar-title p,.buscar-result-header p{margin:4px 0 0;color:#64748b;font-size:13px}.buscar-card label{font-size:12px;font-weight:700;color:#475569}.buscar-input{display:flex;align-items:center;gap:9px;border:1px solid #dfe6ef;border-radius:10px;padding:12px;margin-top:8px}.buscar-input i{color:#94a3b8}.buscar-input input{border:0;outline:none;width:100%;font-size:13px}.buscar-btn{margin-top:18px;border:none;border-radius:9px;padding:12px 18px;background:#f97316;color:#fff;font-weight:700;font-size:13px;cursor:pointer}.buscar-error{margin-top:10px;padding:10px 12px;background:#fef2f2;border-radius:8px;color:#b91c1c;font-size:11px}.buscar-result-header{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:20px}.buscar-eyebrow{font-size:10px!important;letter-spacing:2px;color:#f97316!important;font-weight:800}.buscar-volver{border:1px solid #dfe6ef;background:#fff;border-radius:8px;padding:9px 12px;color:#1e3a8a;font-size:11px;font-weight:700;cursor:pointer}.buscar-persona{display:flex;align-items:center;gap:16px;padding:18px;border-radius:12px;background:#f8fafc}.buscar-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px}.buscar-persona h2{margin:0;color:#172554;font-size:20px}.buscar-persona p{margin:2px 0 7px;color:#64748b;font-size:12px}.buscar-persona span{font-size:11px;color:#475569}.buscar-datos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.buscar-datos div{border:1px solid #edf1f5;border-radius:10px;padding:14px}.buscar-datos span{display:block;font-size:10px;color:#94a3b8}.buscar-datos strong{display:block;margin-top:4px;color:#334155;font-size:13px}.buscar-activo{color:#15803d!important}@media(max-width:700px){.buscar-main{padding:18px 12px}.buscar-step{min-width:80px;font-size:9px}.buscar-step b{font-size:9px}.buscar-datos{grid-template-columns:1fr}.buscar-result-header{flex-direction:column}.buscar-volver{width:100%}}
+
+/* Formulario de búsqueda: input y botón en columna clara */
+.buscar-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.buscar-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #fff;
+}
+
+.buscar-input input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.buscar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 280px;
+  border: none;
+  border-radius: 12px;
+  background: #f97316;
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 18px;
+  cursor: pointer;
+}
