@@ -3,9 +3,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.router import api_router
-from app.core.config import get_settings
-from app.core.exceptions import AppError, app_error_handler
+from app.api.enrutador import api_router
+from app.nucleo.configuracion import get_settings
+from app.nucleo.excepciones import AppError, app_error_handler
 
 settings = get_settings()
 

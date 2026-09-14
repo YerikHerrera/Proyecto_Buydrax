@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
 import { listarProyectos, type Proyecto } from "../services/proyectosService";
@@ -18,6 +19,15 @@ const TIPOS = [
   "Reporte de personal",
   "Reporte de proyecto",
   "Reporte de horas extras",
+];
+
+const ACCESOS = [
+  { to: "/reportes/general", title: "General por proyecto", desc: "Resúmenes y avance", icon: "bi-pie-chart" },
+  { to: "/reportes/personal", title: "Personal activo", desc: "Proyecto · nombre · cargo · estado", icon: "bi-people" },
+  { to: "/reportes/asistencia", title: "Asistencia", desc: "Calendario visual por empleado", icon: "bi-calendar-check" },
+  { to: "/reportes/horas-extra", title: "Horas extra", desc: "Filtros por proyecto y estado", icon: "bi-clock-history" },
+  { to: "/reportes/turnos", title: "Turnos", desc: "Horarios asignados", icon: "bi-alarm" },
+  { to: "/reportes/proyectos", title: "Proyectos / obras", desc: "Presupuesto y % avance", icon: "bi-building" },
 ];
 
 export default function Reportes() {
@@ -68,11 +78,57 @@ export default function Reportes() {
   return (
     <AppShell>
       <Breadcrumb items={[{ label: "Reportes" }]} />
+
       <div className="page-card" style={{ marginBottom: 20 }}>
-        <h1 className="page-title">Crear reporte</h1>
+        <h1 className="page-title">Centro de reportes</h1>
         <p className="page-subtitle">
-          Los proyectos salen de la API. El listado de reportes se guarda en este navegador
-          (aún no hay endpoint de reportes operativos en el backend).
+          Accesos a reportes operativos (vista visual). Los datos mock se reemplazarán al conectar endpoints.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+            gap: 12,
+            marginTop: 16,
+          }}
+        >
+          {ACCESOS.map((a) => (
+            <Link
+              key={a.to}
+              to={a.to}
+              style={{
+                display: "block",
+                padding: 16,
+                borderRadius: 12,
+                border: "1px solid #e2e8f0",
+                background: "#fff",
+                textDecoration: "none",
+                color: "inherit",
+                transition: "border-color 0.15s, box-shadow 0.15s, transform 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "#f59e0b";
+                e.currentTarget.style.boxShadow = "0 8px 18px rgba(249,115,22,0.12)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.transform = "none";
+              }}
+            >
+              <i className={`bi ${a.icon}`} style={{ color: "#ea580c", fontSize: 20 }} />
+              <div style={{ fontWeight: 700, marginTop: 8, fontSize: 14 }}>{a.title}</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{a.desc}</div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="page-card" style={{ marginBottom: 20 }}>
+        <h2 className="page-title" style={{ fontSize: 18 }}>Crear nota de reporte</h2>
+        <p className="page-subtitle">
+          Los proyectos salen de la API. El listado se guarda en este navegador (aún sin endpoint de reportes).
         </p>
         <div className="agregar-form" style={{ marginTop: 16 }}>
           <div>
@@ -82,70 +138,89 @@ export default function Reportes() {
           <div>
             <label className="agregar-label">Proyecto</label>
             <select className="agregar-input" value={proyecto} onChange={(e) => setProyecto(e.target.value)}>
-              <option value="">Seleccionar</option>
+              <option value="">Selecciona…</option>
               {proyectos.map((p) => (
-                <option key={p.id_proyecto} value={p.nombre}>{p.nombre}</option>
+                <option key={p.id_proyecto} value={p.nombre}>
+                  {p.nombre}
+                </option>
               ))}
             </select>
           </div>
           <div>
             <label className="agregar-label">Tipo</label>
             <select className="agregar-input" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-              <option value="">Seleccionar</option>
+              <option value="">Selecciona…</option>
               {TIPOS.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </select>
           </div>
           <div>
             <label className="agregar-label">Fecha</label>
-            <input className="agregar-input" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+            <input type="date" className="agregar-input" value={fecha} onChange={(e) => setFecha(e.target.value)} />
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
             <label className="agregar-label">Descripción</label>
-            <textarea className="agregar-input" maxLength={500} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={3} />
+            <textarea
+              className="agregar-input"
+              rows={3}
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+            />
           </div>
         </div>
-        <div className="agregar-botones" style={{ marginTop: 16 }}>
-          <button className="agregar-btn-primario" type="button" onClick={guardar}>
-            Guardar reporte
+        <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
+          <button type="button" className="agregar-btn-primario" onClick={guardar}>
+            Guardar
+          </button>
+          <button
+            type="button"
+            className="agregar-btn-secundario btn-cancel-hover"
+            onClick={() => {
+              setNombre("");
+              setProyecto("");
+              setTipo("");
+              setFecha("");
+              setDescripcion("");
+            }}
+          >
+            Cancelar
           </button>
         </div>
       </div>
 
       <div className="page-card">
-        <h2 className="page-title" style={{ fontSize: 16 }}>Reportes guardados</h2>
+        <h2 className="page-title" style={{ fontSize: 16 }}>Notas guardadas</h2>
         {reportes.length === 0 ? (
-          <p style={{ color: "#94a3b8" }}>No hay reportes aún.</p>
+          <p style={{ color: "#94a3b8", marginTop: 12 }}>Aún no hay reportes guardados en este navegador.</p>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
-                  <th style={{ padding: 10 }}>Nombre</th>
-                  <th style={{ padding: 10 }}>Proyecto</th>
-                  <th style={{ padding: 10 }}>Tipo</th>
-                  <th style={{ padding: 10 }}>Fecha</th>
-                  <th style={{ padding: 10 }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {reportes.map((r) => (
-                  <tr key={r.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: 10 }}>{r.nombre}</td>
-                    <td style={{ padding: 10 }}>{r.proyecto}</td>
-                    <td style={{ padding: 10 }}>{r.tipo}</td>
-                    <td style={{ padding: 10 }}>{r.fecha}</td>
-                    <td style={{ padding: 10 }}>
-                      <button type="button" className="agregar-btn-secundario" onClick={() => eliminar(r.id)}>
-                        Eliminar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ul style={{ marginTop: 12, listStyle: "none", padding: 0 }}>
+            {reportes.map((r) => (
+              <li
+                key={r.id}
+                style={{
+                  padding: 12,
+                  borderBottom: "1px solid #f1f5f9",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <strong>{r.nombre}</strong> · {r.tipo} · {r.proyecto}
+                  <div style={{ fontSize: 12, color: "#64748b" }}>
+                    {r.fecha} — {r.descripcion}
+                  </div>
+                </div>
+                <button type="button" className="agregar-btn-secundario btn-cancel-hover" onClick={() => eliminar(r.id)}>
+                  Eliminar
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </AppShell>

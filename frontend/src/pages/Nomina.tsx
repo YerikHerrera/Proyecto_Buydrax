@@ -33,7 +33,9 @@ export default function Nomina() {
       <Breadcrumb items={[{ label: "Nómina" }]} />
       <div className="page-card" style={{ marginBottom: 20 }}>
         <h1 className="page-title">Gestión de nómina</h1>
-        <p className="page-subtitle">Datos desde API (no mock).</p>
+        <p className="page-subtitle">
+          Resumen general y listado desde API. Gráficas por proyecto son vista previa visual.
+        </p>
         {error && <p style={{ color: "#b00020" }}>{error}</p>}
         <div className="nomina-summary-grid" style={{ marginTop: 16 }}>
           <div className="nomina-summary-card">
@@ -49,7 +51,7 @@ export default function Nomina() {
             <div>
               <span>Horas extra pend.</span>
               <strong>{stats?.horas_extra_pendientes ?? "—"}</strong>
-              <Link to="/asistencia/reporte"><small>Ver horas extra →</small></Link>
+              <Link to="/reportes/horas-extra"><small>Ver horas extra →</small></Link>
             </div>
           </div>
           <div className="nomina-summary-card">
@@ -60,6 +62,39 @@ export default function Nomina() {
             </div>
           </div>
         </div>
+
+        {/* Resumen visual por proyecto (mock hasta endpoints) */}
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: "22px 0 10px" }}>
+          Costo estimado por obra (vista previa)
+        </h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            { nombre: "Obra Norte", pct: 72, valor: "$ 85.2M" },
+            { nombre: "Torre Centro", pct: 45, valor: "$ 210.0M" },
+            { nombre: "Ampliación Sur", pct: 88, valor: "$ 42.5M" },
+            { nombre: "Puente Oriente", pct: 100, valor: "$ 156.8M" },
+          ].map((r) => (
+            <div key={r.nombre} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 130, fontSize: 13, fontWeight: 600 }}>{r.nombre}</span>
+              <div style={{ flex: 1, height: 12, background: "#f1f5f9", borderRadius: 999, overflow: "hidden" }}>
+                <div
+                  style={{
+                    width: `${r.pct}%`,
+                    height: "100%",
+                    background: "linear-gradient(90deg, #ea580c, #f59e0b)",
+                    borderRadius: 999,
+                  }}
+                />
+              </div>
+              <span style={{ width: 72, textAlign: "right", fontSize: 12, fontWeight: 700, color: "#0f172a" }}>
+                {r.valor}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p style={{ marginTop: 10, fontSize: 12, color: "#94a3b8" }}>
+          Los valores de barra son ilustrativos. Se calcularán con datos reales de nómina por proyecto.
+        </p>
       </div>
 
       <div className="page-card">

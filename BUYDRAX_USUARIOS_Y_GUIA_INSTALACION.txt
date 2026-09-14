@@ -1,0 +1,316 @@
+================================================================================
+BUYDRAX - CREDENCIALES DE PRUEBA Y GUÍA DE INSTALACIÓN
+================================================================================
+Fecha: 2026-09-04
+Proyecto: Buydrax (Frontend React + Backend FastAPI + PostgreSQL)
+
+--------------------------------------------------------------------------------
+1. USUARIOS DE PRUEBA (después de ejecutar el SQL de reset de contraseñas)
+--------------------------------------------------------------------------------
+
+IMPORTANTE: La contraseña de TODOS los usuarios es la misma después de
+ejecutar el script SQL_RESET_PASSWORD_Admin123.sql:
+
+    Contraseña: Admin123!
+
+Los hashes originales del script principal NO permiten login con texto plano.
+Debes ejecutar el reset (o el script Python set_passwords.py).
+
+------------------------------------------------
+A) ADMIN RRHH
+------------------------------------------------
+Correo:     claudia.cardenas@construandes.com.co
+Contraseña: Admin123!
+Nombre:     Claudia Cardenas Mejia
+Perfil:     ADMIN_RRHH (id_perfil = 1)
+Rol:        Administración / RRHH
+Uso:        Vista completa de gestión de empleados, nómina, contratos,
+            configuración, liquidaciones, PILA, etc.
+
+Alternativa Admin RRHH:
+Correo:     laura.munoz@construandes.com.co
+Contraseña: Admin123!
+
+------------------------------------------------
+B) SUPERVISOR
+------------------------------------------------
+Correo:     ricardo.gil@construandes.com.co
+Contraseña: Admin123!
+Nombre:     Ricardo Gil Gomez
+Perfil:     SUPERVISOR (id_perfil = 2)
+Rol:        Supervisor de obra
+Uso:        Gestión de asistencia, turnos, horas extra, observaciones,
+            evaluaciones, proyectos asignados a su cuadrilla.
+
+Alternativas Supervisor:
+  - patricia.vargas@construandes.com.co
+  - julian.ramirez@construandes.com.co
+
+------------------------------------------------
+C) EMPLEADO PROMEDIO
+------------------------------------------------
+Correo:     martha.gomez@construandes.com.co
+Contraseña: Admin123!
+Nombre:     Martha Gomez Ortiz
+Perfil:     EMPLEADO (id_perfil = 4)
+Rol:        Empleado de obra / operativo
+Uso:        Vista limitada: consultar sus datos, desprendibles,
+            solicitudes, notificaciones, certificaciones propias.
+
+Otros empleados (todos con Admin123!):
+  - sergio.pena@construandes.com.co
+  - cristian.suarez@construandes.com.co
+  - andres.castro@construandes.com.co
+  - carlos.sanchez@construandes.com.co
+
+--------------------------------------------------------------------------------
+2. REQUISITOS PREVIOS
+--------------------------------------------------------------------------------
+
+- PostgreSQL 14+ instalado y en ejecución
+- Python 3.10+ (recomendado 3.11 o 3.12)
+- Node.js 18+ (recomendado 20 LTS) y npm
+- Git (opcional)
+- Un editor o cliente SQL (DBeaver, pgAdmin, psql)
+
+En Windows puedes usar:
+  - PostgreSQL oficial + pgAdmin
+  - Python desde python.org
+  - Node desde nodejs.org
+
+En Linux/Mac:
+  sudo apt install postgresql postgresql-contrib   # Debian/Ubuntu
+  # o brew install postgresql
+
+--------------------------------------------------------------------------------
+3. PASO A PASO - BASE DE DATOS
+--------------------------------------------------------------------------------
+
+1. Crear la base de datos:
+
+   psql -U postgres
+   CREATE DATABASE buydrax;
+   \q
+
+   (O desde pgAdmin / DBeaver: crear base "buydrax")
+
+2. Conectarte a la base buydrax y ejecutar EN ORDEN:
+
+   a) BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
+      (crea tablas, tipos ENUM, datos de prueba y sincroniza secuencias)
+
+   b) SQL_RESET_PASSWORD_Admin123.sql
+      (pone la contraseña Admin123! a TODOS los usuarios)
+
+   Desde psql:
+   psql -U postgres -d buydrax -f BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
+   psql -U postgres -d buydrax -f SQL_RESET_PASSWORD_Admin123.sql
+
+   Desde DBeaver: abrir cada archivo y ejecutar (F5 / Execute SQL Script).
+
+3. Verificar usuarios (opcional):
+
+   SELECT id_usuario, correo, id_perfil, estado FROM usuarios ORDER BY id_usuario LIMIT 15;
+
+   id_perfil:
+     1 = ADMIN_RRHH
+     2 = SUPERVISOR
+     3 = CONTADOR
+     4 = EMPLEADO
+
+--------------------------------------------------------------------------------
+4. PASO A PASO - BACKEND (FastAPI)
+--------------------------------------------------------------------------------
+
+1. Ir a la carpeta del backend:
+
+   cd buydrax_completo/backend
+
+2. Crear y activar entorno virtual:
+
+   # Windows
+   python -m venv .venv
+   .\.venv\Scripts\activate
+
+   # Linux / Mac
+   python3 -m venv .venv
+   source .venv/bin/activate
+
+3. Instalar dependencias:
+
+   pip install -r requirements.txt
+
+4. Configurar variables de entorno:
+
+   # Windows
+   copy .env.example .env
+
+   # Linux / Mac
+   cp .env.example .env
+
+   Editar el archivo .env con un editor de texto:
+
+   DATABASE_URL=postgresql+psycopg2://TU_USUARIO:TU_PASSWORD@localhost:5432/buydrax
+   SECRET_KEY=una-clave-secreta-larga-y-aleatoria-cambia-esto
+   ALGORITHM=HS256
+   ACCESS_TOKEN_EXPIRE_MINUTES=480
+   APP_NAME=Buydrax API
+   APP_ENV=development
+   DEBUG=true
+   API_PREFIX=/api/v1
+
+   Ejemplo típico (usuario postgres):
+   DATABASE_URL=postgresql+psycopg2://postgres:tu_password@localhost:5432/buydrax
+
+5. (Opcional) Resetear contraseñas desde Python en lugar del SQL:
+
+   python scripts/set_passwords.py --password Admin123! --apply
+
+6. Arrancar el servidor:
+
+   uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+7. Verificar:
+
+   - Health:  http://127.0.0.1:8000/health
+   - Docs:    http://127.0.0.1:8000/docs
+   - OpenAPI: http://127.0.0.1:8000/openapi.json
+
+   Deja esta terminal abierta mientras usas el sistema.
+
+--------------------------------------------------------------------------------
+5. PASO A PASO - FRONTEND (React + Vite)
+--------------------------------------------------------------------------------
+
+1. Abrir OTRA terminal e ir a la carpeta del frontend:
+
+   cd buydrax_completo/frontend
+
+2. Instalar dependencias:
+
+   npm install
+
+3. (Recomendado) Crear archivo .env:
+
+   # Windows (PowerShell)
+   echo VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1 > .env
+
+   # Linux / Mac
+   echo "VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1" > .env
+
+   Si no creas el .env, el frontend usa por defecto esa misma URL base
+   (revisa src/config/api.ts).
+
+4. Arrancar el servidor de desarrollo:
+
+   npm run dev
+
+5. Abrir el navegador:
+
+   http://localhost:5173
+
+   (Vite suele mostrar la URL exacta en la consola)
+
+--------------------------------------------------------------------------------
+6. ORDEN RECOMENDADO DE ARRANQUE
+--------------------------------------------------------------------------------
+
+1. PostgreSQL en ejecución
+2. Backend  →  uvicorn ... --port 8000
+3. Frontend →  npm run dev
+4. Navegador → http://localhost:5173
+5. Login con uno de los 3 usuarios de la sección 1
+
+--------------------------------------------------------------------------------
+7. CÓMO VER LAS DIFERENCIAS DE INTERFAZ POR ROL
+--------------------------------------------------------------------------------
+
+1. Cierra sesión (Logout) si ya hay alguien logueado.
+2. Inicia sesión con:
+   - Admin RRHH  →  claudia.cardenas@construandes.com.co / Admin123!
+     Observa: menú lateral completo (empleados, nómina, configuración, etc.)
+3. Cierra sesión.
+4. Inicia sesión con:
+   - Supervisor  →  ricardo.gil@construandes.com.co / Admin123!
+     Observa: opciones orientadas a obra (asistencia, turnos, horas extra,
+     observaciones, proyectos de su cuadrilla).
+5. Cierra sesión.
+6. Inicia sesión con:
+   - Empleado    →  martha.gomez@construandes.com.co / Admin123!
+     Observa: vista restringida (perfil propio, desprendibles, solicitudes,
+     notificaciones).
+
+El Sidebar y las rutas protegidas cambian según el perfil del token JWT.
+
+--------------------------------------------------------------------------------
+8. PROBLEMAS FRECUENTES Y SOLUCIONES
+--------------------------------------------------------------------------------
+
+• Error de conexión a PostgreSQL
+  - Verifica que el servicio esté corriendo.
+  - Revisa usuario/contraseña/puerto en DATABASE_URL.
+  - En Windows a veces hay que permitir conexiones locales en pg_hba.conf.
+
+• Login falla con "credenciales incorrectas"
+  - Asegúrate de haber ejecutado SQL_RESET_PASSWORD_Admin123.sql
+    DESPUÉS del script principal.
+  - Contraseña exacta: Admin123!  (con mayúscula A, números y !)
+
+• Frontend no conecta al backend (CORS / Network Error)
+  - Backend debe estar en http://127.0.0.1:8000
+  - Revisa que VITE_API_BASE_URL apunte a .../api/v1
+  - Abre http://127.0.0.1:8000/docs y prueba el endpoint /auth/login
+
+• Puerto 8000 o 5173 ocupado
+  - Cambia el puerto del backend: --port 8001
+  - O del frontend: npm run dev -- --port 5174
+  - Actualiza VITE_API_BASE_URL si cambias el backend.
+
+• bcrypt / passlib errores al instalar
+  - Usa bcrypt==4.0.1 (ya está fijado en requirements.txt)
+  - En algunos entornos: pip install --upgrade pip
+
+• Secuencias SERIAL desincronizadas
+  - El script principal ya incluye setval al final.
+  - Si insertas datos manualmente, vuelve a ejecutar la sección de setval.
+
+--------------------------------------------------------------------------------
+9. ESTRUCTURA RÁPIDA DEL PROYECTO
+--------------------------------------------------------------------------------
+
+buydrax_completo/
+├── BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
+├── SQL_RESET_PASSWORD_Admin123.sql
+├── README.md
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── api/v1/endpoints/   (auth, domain, usuarios, roles)
+│   │   ├── core/               (config, security, dependencies)
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   └── services/
+│   ├── scripts/set_passwords.py
+│   ├── requirements.txt
+│   └── .env.example
+└── frontend/
+    ├── src/
+    │   ├── components/layout/  (Sidebar, Navbar, AppShell)
+    │   ├── config/api.ts
+    │   └── ...
+    ├── package.json
+    └── README_CONEXION.md
+
+--------------------------------------------------------------------------------
+10. RESUMEN RÁPIDO DE CREDENCIALES
+--------------------------------------------------------------------------------
+
+| Rol            | Correo                                  | Contraseña  |
+|----------------|-----------------------------------------|-------------|
+| Admin RRHH     | claudia.cardenas@construandes.com.co    | Admin123!   |
+| Supervisor     | ricardo.gil@construandes.com.co         | Admin123!   |
+| Empleado       | martha.gomez@construandes.com.co        | Admin123!   |
+
+¡Listo! Con esto puedes comparar las interfaces de cada perfil.
+
+================================================================================

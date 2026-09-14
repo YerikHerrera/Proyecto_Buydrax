@@ -948,3 +948,40 @@ tbody tr:hover {
   color: #fff;
   font-weight: 700;
 }
+
+/* ===== Buydrax UI polish (hovers, cancel → rojo, suavizado) ===== */
+.btn-cancel-hover,
+button.agregar-btn-secundario:hover,
+.agregar-btn-secundario.btn-cancel-hover:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.agregar-btn-primario {
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.agregar-btn-primario:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(249, 115, 22, 0.28);
+}
+
+.sidebar-link,
+.sidebar-sublink {
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.app-navbar__icon-btn,
+.app-navbar__user {
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
