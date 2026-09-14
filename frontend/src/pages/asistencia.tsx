@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
+import AsistenciaForm from "../components/operaciones/AsistenciaForm";
 import { listarEmpleados, type Empleado } from "../services/empleadosService";
 import { listarUsuarios, nombreUsuario, type UsuarioPublic } from "../services/usuariosService";
 import { apiRequest } from "../services/apiClient";
@@ -71,64 +72,5 @@ export default function Asistencia() {
     }
   };
 
-  return (
-    <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Asistencia", to: "/asistencia" },
-          { label: "Registrar" },
-        ]}
-      />
-      <div className="page-card">
-        <h1 className="page-title">Registrar asistencia</h1>
-        <p className="page-subtitle">Entrada y salida del personal en obra.</p>
-        {loading && <p style={{ marginTop: 12 }}>Cargando empleados…</p>}
-        {error && <p style={{ color: "#b00020", marginTop: 12 }}>{error}</p>}
-        {ok && <p style={{ color: "#047857", marginTop: 12 }}>{ok}</p>}
-        <div className="agregar-form" style={{ marginTop: 20 }}>
-          <div>
-            <label className="agregar-label">Empleado *</label>
-            <select
-              className="agregar-input"
-              value={empleadoId}
-              onChange={(e) => setEmpleadoId(e.target.value)}
-              disabled={loading}
-            >
-              <option value="">Seleccionar</option>
-              {empleados.map((e) => (
-                <option key={e.id_empleado} value={e.id_empleado}>
-                  {labelEmp(e)} — {e.cargo}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="agregar-label">Fecha *</label>
-            <input className="agregar-input" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Hora entrada *</label>
-            <input className="agregar-input" type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Hora salida</label>
-            <input className="agregar-input" type="time" value={horaSalida} onChange={(e) => setHoraSalida(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Estado</label>
-            <select className="agregar-input" value={estado} onChange={(e) => setEstado(e.target.value)}>
-              {ESTADOS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="agregar-botones" style={{ marginTop: 20 }}>
-          <button className="agregar-btn-primario" type="button" onClick={guardar} disabled={saving || loading}>
-            {saving ? "Guardando…" : "Guardar asistencia"}
-          </button>
-        </div>
-      </div>
-    </AppShell>
-  );
+  return (<AppShell><Breadcrumb items={[{label:"Asistencia",to:"/asistencia"},{label:"Registrar"}]}/><div className="page-card"><h1 className="page-title">Registrar asistencia</h1><p className="page-subtitle">Entrada y salida del personal en obra.</p>{loading&&<p style={{marginTop:12}}>Cargando empleados…</p>}{error&&<p style={{color:"#b00020",marginTop:12}}>{error}</p>}{ok&&<p style={{color:"#047857",marginTop:12}}>{ok}</p>}<AsistenciaForm empleados={empleados} usuariosMap={usuariosMap} empleadoId={empleadoId} setEmpleadoId={setEmpleadoId} fecha={fecha} setFecha={setFecha} horaEntrada={horaEntrada} setHoraEntrada={setHoraEntrada} horaSalida={horaSalida} setHoraSalida={setHoraSalida} estado={estado} setEstado={setEstado} loading={loading} saving={saving} onGuardar={guardar}/></div></AppShell>);
 }

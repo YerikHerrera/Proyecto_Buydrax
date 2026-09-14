@@ -1,6 +1,6 @@
 """Pruebas unitarias de seguridad (sin BD)."""
 
-from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
+from app.nucleo.seguridad import create_access_token, decode_access_token, hash_password, verify_password
 
 
 def test_hash_and_verify():

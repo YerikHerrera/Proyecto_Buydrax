@@ -20,6 +20,13 @@ import EditarEmpleado from "../pages/EditarEmpleado";
 import Turnos from "../pages/Turnos";
 import Aprobaciones from "../pages/Aprobaciones";
 import ProtectedRoute from "../components/ProtectedRoute";
+import ReportePersonal from "../pages/reportes/ReportePersonal";
+import ReporteAsistencia from "../pages/reportes/ReporteAsistencia";
+import ReporteHorasExtra from "../pages/reportes/ReporteHorasExtra";
+import ReporteTurnos from "../pages/reportes/ReporteTurnos";
+import ReporteProyectos from "../pages/reportes/ReporteProyectos";
+import ReporteGeneral from "../pages/reportes/ReporteGeneral";
+import PortalEmpleado from "../pages/PortalEmpleado";
 
 function AppRoutes() {
   return (
@@ -29,7 +36,7 @@ function AppRoutes() {
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* Rutas protegidas: requieren token JWT */}
+        {/* Rutas protegidas */}
         <Route
           path="/dashboard"
           element={
@@ -139,7 +146,7 @@ function AppRoutes() {
           }
         />
 
-        {/* Asistencia */}
+        {/* Asistencia — páginas de acción existentes */}
         <Route
           path="/asistencia"
           element={
@@ -173,7 +180,7 @@ function AppRoutes() {
           }
         />
 
-        {/* Reportes / Nómina / Perfiles */}
+        {/* Reportes nuevos (visual / mock) */}
         <Route
           path="/reportes"
           element={
@@ -183,6 +190,56 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/reportes/personal"
+          element={
+            <ProtectedRoute>
+              <ReportePersonal />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reportes/asistencia"
+          element={
+            <ProtectedRoute>
+              <ReporteAsistencia />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reportes/horas-extra"
+          element={
+            <ProtectedRoute>
+              <ReporteHorasExtra />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reportes/turnos"
+          element={
+            <ProtectedRoute>
+              <ReporteTurnos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reportes/proyectos"
+          element={
+            <ProtectedRoute>
+              <ReporteProyectos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reportes/general"
+          element={
+            <ProtectedRoute>
+              <ReporteGeneral />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Nómina */}
+        <Route
           path="/nomina"
           element={
             <ProtectedRoute>
@@ -191,10 +248,53 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/nomina/generar"
+          element={
+            <ProtectedRoute>
+              <Nomina />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/perfiles"
           element={
             <ProtectedRoute>
               <Perfiles />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Portal empleado */}
+        <Route
+          path="/portal"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/pagos"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="pagos" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/prestamos"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="prestamos" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/solicitudes"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="solicitudes" />
             </ProtectedRoute>
           }
         />

@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
+import FiltrosBar from "../components/reportes/FiltrosBar";
 import { listarSupervisores } from "../services/proyectosService";
 import { listarProyectos, type Proyecto } from "../services/proyectosService";
+import { MOCK_PERSONAL, MOCK_PROYECTOS } from "../data/mockReportes";
 import "../styles/Supervisor.css";
+import SupervisoresTable from "../components/supervisor/SupervisoresTable";
+import EmpleadosAsignadosPreview from "../components/supervisor/EmpleadosAsignadosPreview";
 
 export default function Supervisor() {
   const [supervisores, setSupervisores] = useState<
@@ -11,6 +15,8 @@ export default function Supervisor() {
   >([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [error, setError] = useState("");
+  const [filtroProyecto, setFiltroProyecto] = useState("");
+  const [filtroCuadrilla, setFiltroCuadrilla] = useState("");
 
   useEffect(() => {
     listarSupervisores()
@@ -21,6 +27,33 @@ export default function Supervisor() {
       .catch(() => setProyectos([]));
   }, []);
 
+  const cuadrillas = useMemo(() => {
+    const set = new Set<string>();
+    supervisores.forEach((s) => {
+      if (s.cuadrilla_asignada) set.add(s.cuadrilla_asignada);
+    });
+    return Array.from(set).sort();
+  }, [supervisores]);
+
+  const supervisoresFiltrados = useMemo(() => {
+    return supervisores.filter((s) => {
+      if (filtroCuadrilla && (s.cuadrilla_asignada || "") !== filtroCuadrilla) return false;
+      if (filtroProyecto) {
+        // referencia por nombre de proyecto en listado de proyectos
+        const match = proyectos.some(
+          (p) => p.nombre === filtroProyecto && Number(p.id_supervisor) === s.id_supervisor
+        );
+        // si no hay match API, no ocultamos todo: solo filtramos cuando hay datos
+        if (proyectos.length > 0 && !match) return false;
+      }
+      return true;
+    });
+  }, [supervisores, filtroCuadrilla, filtroProyecto, proyectos]);
+
+  const empleadosMock = useMemo(() => {
+    return MOCK_PERSONAL.filter((e) => !filtroProyecto || e.proyecto === filtroProyecto);
+  }, [filtroProyecto]);
+
   return (
     <AppShell>
       <Breadcrumb
@@ -30,49 +63,55 @@ export default function Supervisor() {
         ]}
       />
       <div className="page-card" style={{ marginBottom: 20 }}>
-        <h1 className="page-title">Supervisores</h1>
-        <p className="page-subtitle">Listado real desde GET /supervisores (sin nombres inventados).</p>
+        <h1 className="page-title">Supervisores y cuadrillas</h1>
+        <p className="page-subtitle">
+          Filtros por proyecto y cuadrilla. Listado real desde API; empleados asignados en vista previa mock.
+        </p>
         {error && <p style={{ color: "#b00020" }}>{error}</p>}
-        <div style={{ overflowX: "auto", marginTop: 12 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
-                <th style={{ padding: 10 }}>ID</th>
-                <th style={{ padding: 10 }}>Tarjeta profesional</th>
-                <th style={{ padding: 10 }}>Cuadrilla</th>
-              </tr>
-            </thead>
-            <tbody>
-              {supervisores.length === 0 ? (
-                <tr>
-                  <td colSpan={3} style={{ padding: 20, textAlign: "center", color: "#94a3b8" }}>
-                    Sin supervisores o sin respuesta de la API.
-                  </td>
-                </tr>
-              ) : (
-                supervisores.map((s) => (
-                  <tr key={s.id_supervisor} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: 10 }}>#{s.id_supervisor}</td>
-                    <td style={{ padding: 10 }}>{s.numero_tarjeta_profesional}</td>
-                    <td style={{ padding: 10 }}>{s.cuadrilla_asignada || "—"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+
+        <FiltrosBar
+          onLimpiar={() => {
+            setFiltroProyecto("");
+            setFiltroCuadrilla("");
+          }}
+          filtros={[
+            {
+              key: "proyecto",
+              label: "Proyecto",
+              value: filtroProyecto,
+              onChange: setFiltroProyecto,
+              options: [
+                { value: "", label: "Todos" },
+                ...Array.from(
+                  new Set([
+                    ...MOCK_PROYECTOS,
+                    ...proyectos.map((p) => p.nombre),
+                  ])
+                ).map((p) => ({ value: p, label: p })),
+              ],
+            },
+            {
+              key: "cuadrilla",
+              label: "Cuadrilla",
+              value: filtroCuadrilla,
+              onChange: setFiltroCuadrilla,
+              options: [
+                { value: "", label: "Todas" },
+                ...cuadrillas.map((c) => ({ value: c, label: c })),
+              ],
+            },
+          ]}
+        />
+
+        <SupervisoresTable items={supervisoresFiltrados} proyectos={proyectos} />
       </div>
 
       <div className="page-card">
-        <h2 className="page-title" style={{ fontSize: 16 }}>Proyectos por supervisor (referencia)</h2>
-        <ul style={{ margin: "12px 0 0", paddingLeft: 18, color: "#475569" }}>
-          {proyectos.map((p) => (
-            <li key={p.id_proyecto}>
-              {p.nombre} — supervisor #{p.id_supervisor} — {p.estado_proyecto}
-            </li>
-          ))}
-          {proyectos.length === 0 && <li>No hay proyectos cargados.</li>}
-        </ul>
+        <h2 className="page-title" style={{ fontSize: 16 }}>
+          Empleados asignados (vista previa)
+        </h2>
+        <p className="page-subtitle">Datos mock: especialidad/cargo, estado y proyecto.</p>
+        <EmpleadosAsignadosPreview empleados={empleadosMock} />
       </div>
     </AppShell>
   );

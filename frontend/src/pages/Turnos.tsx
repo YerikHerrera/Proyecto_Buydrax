@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
+import TurnoForm from "../components/operaciones/TurnoForm";
 import { listarEmpleados, type Empleado } from "../services/empleadosService";
 import { listarUsuarios, nombreUsuario, type UsuarioPublic } from "../services/usuariosService";
 import { listarProyectos, type Proyecto } from "../services/proyectosService";
@@ -69,64 +70,5 @@ export default function Turnos() {
     }
   };
 
-  return (
-    <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Asistencia", to: "/asistencia" },
-          { label: "Turnos" },
-        ]}
-      />
-      <div className="page-card">
-        <h1 className="page-title">Asignar turno</h1>
-        <p className="page-subtitle">Turnos diurnos/nocturnos por proyecto.</p>
-        {error && <p style={{ color: "#b00020" }}>{error}</p>}
-        {ok && <p style={{ color: "#047857" }}>{ok}</p>}
-        <div className="agregar-form" style={{ marginTop: 16 }}>
-          <div>
-            <label className="agregar-label">Empleado *</label>
-            <select className="agregar-input" value={empleadoId} onChange={(e) => setEmpleadoId(e.target.value)} disabled={loading}>
-              <option value="">Seleccionar</option>
-              {empleados.map((e) => (
-                <option key={e.id_empleado} value={e.id_empleado}>{labelEmp(e)}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="agregar-label">Proyecto *</label>
-            <select className="agregar-input" value={proyectoId} onChange={(e) => setProyectoId(e.target.value)} disabled={loading}>
-              <option value="">Seleccionar</option>
-              {proyectos.map((p) => (
-                <option key={p.id_proyecto} value={p.id_proyecto}>{p.nombre}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="agregar-label">Tipo de turno</label>
-            <select className="agregar-input" value={tipoTurno} onChange={(e) => setTipoTurno(e.target.value)}>
-              <option value="Diurno">Diurno</option>
-              <option value="Nocturno">Nocturno</option>
-            </select>
-          </div>
-          <div>
-            <label className="agregar-label">Fecha *</label>
-            <input className="agregar-input" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Hora inicio</label>
-            <input className="agregar-input" type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Hora fin</label>
-            <input className="agregar-input" type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} />
-          </div>
-        </div>
-        <div className="agregar-botones" style={{ marginTop: 20 }}>
-          <button className="agregar-btn-primario" type="button" onClick={guardar} disabled={saving || loading}>
-            {saving ? "Guardando…" : "Guardar turno"}
-          </button>
-        </div>
-      </div>
-    </AppShell>
-  );
+  return (<AppShell><Breadcrumb items={[{label:"Asistencia",to:"/asistencia"},{label:"Turnos"}]}/><div className="page-card"><h1 className="page-title">Asignar turno</h1><p className="page-subtitle">Turnos diurnos/nocturnos por proyecto.</p>{error&&<p style={{color:"#b00020"}}>{error}</p>}{ok&&<p style={{color:"#047857"}}>{ok}</p>}<TurnoForm empleados={empleados} proyectos={proyectos} usuariosMap={usuariosMap} empleadoId={empleadoId} setEmpleadoId={setEmpleadoId} proyectoId={proyectoId} setProyectoId={setProyectoId} tipoTurno={tipoTurno} setTipoTurno={setTipoTurno} fecha={fecha} setFecha={setFecha} horaInicio={horaInicio} setHoraInicio={setHoraInicio} horaFin={horaFin} setHoraFin={setHoraFin} loading={loading} saving={saving} onGuardar={guardar}/></div></AppShell>);
 }

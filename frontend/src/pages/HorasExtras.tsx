@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
+import HorasExtrasForm from "../components/operaciones/HorasExtrasForm";
 import { listarEmpleados, type Empleado } from "../services/empleadosService";
 import { listarUsuarios, nombreUsuario, type UsuarioPublic } from "../services/usuariosService";
 import { apiRequest } from "../services/apiClient";
@@ -66,63 +67,5 @@ export default function HorasExtras() {
     }
   };
 
-  return (
-    <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Asistencia", to: "/asistencia" },
-          { label: "Horas extras" },
-        ]}
-      />
-      <div className="page-card">
-        <h1 className="page-title">Horas extras</h1>
-        <p className="page-subtitle">Registro alineado a la API (estado PENDIENTE).</p>
-        {error && <p style={{ color: "#b00020" }}>{error}</p>}
-        {ok && <p style={{ color: "#047857" }}>{ok}</p>}
-        <div className="agregar-form" style={{ marginTop: 16 }}>
-          <div>
-            <label className="agregar-label">Empleado *</label>
-            <select className="agregar-input" value={empleadoId} onChange={(e) => setEmpleadoId(e.target.value)} disabled={loading}>
-              <option value="">Seleccionar</option>
-              {empleados.map((e) => (
-                <option key={e.id_empleado} value={e.id_empleado}>{labelEmp(e)}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="agregar-label">Motivo *</label>
-            <input className="agregar-input" value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={255} />
-          </div>
-          <div>
-            <label className="agregar-label">Fecha inicio *</label>
-            <input className="agregar-input" type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Fecha fin *</label>
-            <input className="agregar-input" type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Cantidad de horas *</label>
-            <input className="agregar-input" type="number" min="0.5" step="0.5" value={cantidad} onChange={(e) => setCantidad(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Tipo de hora</label>
-            <select className="agregar-input" value={tipoHora} onChange={(e) => setTipoHora(e.target.value)}>
-              {TIPOS.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="agregar-botones" style={{ marginTop: 20 }}>
-          <button className="agregar-btn-secundario" type="button" onClick={() => navigate("/asistencia")}>
-            Volver
-          </button>
-          <button className="agregar-btn-primario" type="button" onClick={guardar} disabled={saving || loading}>
-            {saving ? "Guardando…" : "Guardar horas extras"}
-          </button>
-        </div>
-      </div>
-    </AppShell>
-  );
+  return (<AppShell><Breadcrumb items={[{label:"Asistencia",to:"/asistencia"},{label:"Horas extras"}]}/><div className="page-card"><h1 className="page-title">Horas extras</h1><p className="page-subtitle">Registro alineado a la API (estado PENDIENTE).</p>{error&&<p style={{color:"#b00020"}}>{error}</p>}{ok&&<p style={{color:"#047857"}}>{ok}</p>}<HorasExtrasForm empleados={empleados} usuariosMap={usuariosMap} empleadoId={empleadoId} setEmpleadoId={setEmpleadoId} motivo={motivo} setMotivo={setMotivo} fechaInicio={fechaInicio} setFechaInicio={setFechaInicio} fechaFin={fechaFin} setFechaFin={setFechaFin} cantidad={cantidad} setCantidad={setCantidad} tipoHora={tipoHora} setTipoHora={setTipoHora} loading={loading} saving={saving} onGuardar={guardar} onVolver={()=>navigate("/asistencia")}/></div></AppShell>);
 }
