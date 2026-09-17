@@ -1,6 +1,18 @@
+# Dependencias y entornos virtuales
 node_modules/
-.vite/
+**/node_modules/
+.venv/
+**/.venv/
+
+# Builds y cachés de frontend
 dist/
-.venvbackend/.venv/
+**/dist/
+.vite/
+**/.vite/
+
+# Python
+__pycache__/
 **/__pycache__/
 *.pyc
+*.pyo
+*.pyd
