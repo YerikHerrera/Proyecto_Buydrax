@@ -4,7 +4,7 @@ node_modules/
 .venv/
 **/.venv/
 
-# Builds y cachés de frontend
+# Builds y cachÃ©s de frontend
 dist/
 **/dist/
 .vite/
@@ -16,3 +16,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Variables de entorno
+.env
+**/.env
