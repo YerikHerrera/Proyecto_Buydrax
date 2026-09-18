@@ -17,15 +17,6 @@ import {
   menuPermitidoPorRol,
 } from "../services/session";
 
-type CardDef = {
-  titulo: string;
-  path: string;
-  color: string;
-  icon: string;
-  desc: string;
-  roles: ("admin" | "supervisor" | "contador" | "empleado")[];
-};
-
 const ALL_CARDS: CardDef[] = [
   {
     titulo: "Personal activo",

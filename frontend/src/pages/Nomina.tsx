@@ -4,7 +4,7 @@ import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
 import NominaSummary from "../components/nomina/NominaSummary";
 import NominaProyectoPreview from "../components/nomina/NominaProyectoPreview";
-import NominaTable from "../components/nomina/NominaTable";
+import NominaTable, { type NominaRow } from "../components/nomina/NominaTable";
 import { apiRequest } from "../services/apiClient";
 import { getDashboard, type DashboardData } from "../services/dashboardService";
 import "../styles/Nomina.css";
@@ -12,7 +12,7 @@ import "../styles/Nomina.css";
 
 export default function Nomina() {
   const [stats, setStats] = useState<DashboardData | null>(null);
-  const [nominas, setNominas] = useState<import("../components/nomina/NominaTable").NominaRow[]>([]);
+  const [nominas, setNominas] = useState<NominaRow[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {

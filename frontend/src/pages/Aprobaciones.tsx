@@ -8,7 +8,10 @@ import AprobacionesTurnosTable from "../components/aprobaciones/AprobacionesTurn
 import AprobacionesAsistenciaTable from "../components/aprobaciones/AprobacionesAsistenciaTable";
 import { apiRequest } from "../services/apiClient";
 import { listarEmpleados, type Empleado } from "../services/empleadosService";
-import { mapaUsuarios, nombreUsuario } from "../services/usuariosService";
+import { mapaUsuarios, nombreUsuario, type UsuarioPublic } from "../services/usuariosService";
+import type { Asistencia } from "../components/aprobaciones/AprobacionesAsistenciaTable";
+import type { HoraExtra } from "../components/aprobaciones/AprobacionesHorasExtraTable";
+import type { Turno } from "../components/aprobaciones/AprobacionesTurnosTable";
 
 
 
@@ -39,7 +42,7 @@ function AprobacionesInner() {
         apiRequest<HoraExtra[]>("/horas-extra").catch(() => []),
         apiRequest<Turno[]>("/turnos").catch(() => []),
         listarEmpleados().catch(() => [] as Empleado[]),
-        mapaUsuarios().catch(() => ({})),
+        mapaUsuarios().catch(() => ({} as Record<number, UsuarioPublic>)),
       ]);
       setHe(Array.isArray(heData) ? heData : []);
       setTurnos(Array.isArray(turnosData) ? turnosData : []);
