@@ -6,8 +6,52 @@ from app.modelos import Turno
 from app.nucleo.excepciones import NotFoundError
 from app.repositorios.repositorio_asistencias import RepositorioAsistencias
 from app.esquemas.negocio import TurnoCreate, TurnoUpdate
+from fastapi import HTTPException
+from sqlalchemy import select
+from datetime import date, time
+
 
 class ServicioTurnos:
+    
+    def validar_disponibilidad(
+        self,
+        id_empleado: int,
+        fecha: date,
+        hora_inicio: time,
+        hora_fin: time,
+        id_turno_excluir: int | None = None,
+    ) -> None:
+        if hora_inicio >= hora_fin:
+            raise HTTPException(
+                status_code=422,
+                detail="La hora de inicio debe ser anterior a la hora de fin.",
+            )
+
+        consulta = select(Turno).where(
+            Turno.id_empleado == id_empleado,
+            Turno.fecha == fecha,
+            Turno.hora_inicio < hora_fin,
+            Turno.hora_fin > hora_inicio,
+        )
+
+        if id_turno_excluir is not None:
+            consulta = consulta.where(
+                Turno.id_turno != id_turno_excluir
+            )
+
+        turno_existente = self.repo.db.execute(
+            consulta
+        ).scalars().first()
+
+        if turno_existente is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "El empleado ya tiene un turno en ese horario "
+                    "para la fecha seleccionada, posiblemente en otro proyecto."
+                ),
+            )
+
     def __init__(self, db: Session):
         self.repo = RepositorioAsistencias(db)
 
@@ -20,9 +64,27 @@ class ServicioTurnos:
             raise NotFoundError("Turno no encontrado")
         return t
 
-    def crear(self, body: TurnoCreate) -> Turno:
-        t = Turno(**body.model_dump())
-        return self.repo.crear_turno(t)
+    
+    
+    def crear(
+        self,
+        body: TurnoCreate,
+        id_asignado_por: int,
+    ) -> Turno:
+        self.validar_disponibilidad(
+            id_empleado=body.id_empleado,
+            fecha=body.fecha,
+            hora_inicio=body.hora_inicio,
+            hora_fin=body.hora_fin,
+        )
+
+        datos = body.model_dump()
+        datos["id_asignado_por"] = id_asignado_por
+
+        turno = Turno(**datos)
+        return self.repo.crear_turno(turno)
+
+
 
     def actualizar(self, id_turno: int, body: TurnoUpdate) -> Turno:
         t = self.obtener(id_turno)
