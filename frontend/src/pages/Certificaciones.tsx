@@ -1,30 +1,13 @@
-import { useState, type FormEvent, type ChangeEvent } from "react";
+import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import jsPDF from "jspdf";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
+import CertificacionForm, {
+  type CertificacionFormData,
+} from "../components/certificaciones/CertificacionForm";
 import "../styles/Certifaciones.css";
 
-interface CertificacionForm {
-  nombreCertificacion: string;
-  fechaVencimiento: string;
-  entidadCertifica: string;
-  estadoCertificacion: string;
-  fechaObtencion: string;
-  hojaDeVida: File | null;
-}
-
-const CERTIFICACIONES_DISPONIBLES = [
-  "Trabajo en alturas",
-  "Espacios confinados",
-  "Manejo de equipos",
-  "Primeros auxilios",
-  "Seguridad industrial SST",
-];
-
-const ENTIDADES = ["SENA", "ICONTEC", "ARL", "Empresa", "Otro"];
-const ESTADOS = ["ACTIVO", "PROXIMO_VENCER", "VENCIDO"];
-
-const initialState: CertificacionForm = {
+const initialState: CertificacionFormData = {
   nombreCertificacion: "",
   fechaVencimiento: "",
   entidadCertifica: "SENA",
@@ -33,38 +16,59 @@ const initialState: CertificacionForm = {
   hojaDeVida: null,
 };
 
+/** Calcula estado según BD: ACTIVO | PROXIMO_VENCER | VENCIDO */
+export function estadoPorFechas(obtencion: string, vencimiento: string): string {
+  if (!obtencion || !vencimiento) return "";
+  if (obtencion > vencimiento) return "";
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const fin = new Date(vencimiento + "T00:00:00");
+  if (fin < hoy) return "VENCIDO";
+  const limite = new Date(hoy);
+  limite.setDate(limite.getDate() + 30);
+  if (fin <= limite) return "PROXIMO_VENCER";
+  return "ACTIVO";
+}
+
 export default function Certificaciones() {
-  const [form, setForm] = useState<CertificacionForm>(initialState);
-  const [errores, setErrores] = useState<Partial<Record<keyof CertificacionForm, string>>>({});
+  const [form, setForm] = useState<CertificacionFormData>(initialState);
+  const [errores, setErrores] = useState<Partial<Record<keyof CertificacionFormData, string>>>({});
+
+  const estadoCalculado = useMemo(
+    () => estadoPorFechas(form.fechaObtencion, form.fechaVencimiento),
+    [form.fechaObtencion, form.fechaVencimiento]
+  );
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setForm((prev) => ({ ...prev, hojaDeVida: file }));
-  };
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, hojaDeVida: e.target.files?.[0] || null }));
 
-  const validar = (): boolean => {
-    const n: Partial<Record<keyof CertificacionForm, string>> = {};
+  const validar = () => {
+    const n: Partial<Record<keyof CertificacionFormData, string>> = {};
     if (!form.nombreCertificacion) n.nombreCertificacion = "Selecciona una certificación";
-    if (!form.fechaVencimiento) n.fechaVencimiento = "Ingresa la fecha de vencimiento";
     if (!form.entidadCertifica) n.entidadCertifica = "Selecciona la entidad";
-    if (!form.estadoCertificacion) n.estadoCertificacion = "Selecciona un estado";
     if (!form.fechaObtencion) n.fechaObtencion = "Ingresa la fecha de obtención";
+    if (!form.fechaVencimiento) n.fechaVencimiento = "Ingresa la fecha de vencimiento";
+    if (form.fechaObtencion && form.fechaVencimiento && form.fechaObtencion > form.fechaVencimiento) {
+      n.fechaObtencion = "La obtención no puede ser posterior al vencimiento";
+      n.fechaVencimiento = "El vencimiento debe ser igual o posterior a la obtención";
+    }
     setErrores(n);
     return Object.keys(n).length === 0;
   };
 
-  const formatearFecha = (fechaISO: string): string => {
+  const formatearFecha = (fechaISO: string) => {
     if (!fechaISO) return "—";
     const [anio, mes, dia] = fechaISO.split("-");
     return `${dia}/${mes}/${anio}`;
   };
 
   const generarPDF = () => {
+    const estado = estadoPorFechas(form.fechaObtencion, form.fechaVencimiento) || "ACTIVO";
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const w = doc.internal.pageSize.getWidth();
     const h = doc.internal.pageSize.getHeight();
@@ -84,7 +88,7 @@ export default function Certificaciones() {
     const lineas = [
       `Certificación: ${form.nombreCertificacion || "—"}`,
       `Entidad: ${form.entidadCertifica || "—"}`,
-      `Estado: ${form.estadoCertificacion || "—"}`,
+      `Estado: ${estado}`,
       `Fecha de obtención: ${formatearFecha(form.fechaObtencion)}`,
       `Fecha de vencimiento: ${formatearFecha(form.fechaVencimiento)}`,
     ];
@@ -95,12 +99,9 @@ export default function Certificaciones() {
     });
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
-    doc.text(
-      `Generado ${new Date().toLocaleDateString("es-CO")}`,
-      w / 2,
-      h - 15,
-      { align: "center" }
-    );
+    doc.text(`Generado ${new Date().toLocaleDateString("es-CO")}`, w / 2, h - 15, {
+      align: "center",
+    });
     const nombreArchivo = (form.nombreCertificacion || "certificacion")
       .toLowerCase()
       .normalize("NFD")
@@ -111,101 +112,26 @@ export default function Certificaciones() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!validar()) return;
-    generarPDF();
+    if (validar()) generarPDF();
   };
 
   return (
     <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Empleados", to: "/empleados" },
-          { label: "Certificaciones" },
-        ]}
-      />
+      <Breadcrumb items={[{ label: "Empleados", to: "/empleados" }, { label: "Certificaciones" }]} />
       <div className="page-card">
         <h1 className="page-title">Certificación de empleado</h1>
         <p className="page-subtitle">
-          Estados alineados a la BD (ACTIVO / PROXIMO_VENCER / VENCIDO). La descarga genera un PDF local;
-          el alta en API se puede conectar a POST /empleados/&#123;id&#125;/certificaciones.
+          La fecha de obtención debe ser ≤ fecha de vencimiento. El estado se calcula solo (ACTIVO /
+          PROXIMO_VENCER / VENCIDO).
         </p>
-        <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
-          <div className="agregar-form">
-            <div>
-              <label className="agregar-label">Nombre certificación</label>
-              <select
-                className="agregar-input"
-                name="nombreCertificacion"
-                value={form.nombreCertificacion}
-                onChange={handleChange}
-              >
-                <option value="">Seleccionar</option>
-                {CERTIFICACIONES_DISPONIBLES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              {errores.nombreCertificacion && (
-                <span style={{ color: "#b00020", fontSize: 12 }}>{errores.nombreCertificacion}</span>
-              )}
-            </div>
-            <div>
-              <label className="agregar-label">Fecha vencimiento</label>
-              <input
-                className="agregar-input"
-                type="date"
-                name="fechaVencimiento"
-                value={form.fechaVencimiento}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label className="agregar-label">Entidad</label>
-              <select
-                className="agregar-input"
-                name="entidadCertifica"
-                value={form.entidadCertifica}
-                onChange={handleChange}
-              >
-                {ENTIDADES.map((e) => (
-                  <option key={e} value={e}>{e}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="agregar-label">Estado</label>
-              <select
-                className="agregar-input"
-                name="estadoCertificacion"
-                value={form.estadoCertificacion}
-                onChange={handleChange}
-              >
-                <option value="">Seleccionar</option>
-                {ESTADOS.map((e) => (
-                  <option key={e} value={e}>{e}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="agregar-label">Fecha obtención</label>
-              <input
-                className="agregar-input"
-                type="date"
-                name="fechaObtencion"
-                value={form.fechaObtencion}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label className="agregar-label">Soporte PDF</label>
-              <input className="agregar-input" type="file" accept="application/pdf" onChange={handleFileChange} />
-            </div>
-          </div>
-          <div className="agregar-botones" style={{ marginTop: 20 }}>
-            <button type="submit" className="agregar-btn-primario">
-              Descargar certificado PDF
-            </button>
-          </div>
-        </form>
+        <CertificacionForm
+          form={form}
+          errores={errores}
+          onChange={handleChange}
+          onFileChange={handleFileChange}
+          onSubmit={handleSubmit}
+          estadoCalculado={estadoCalculado}
+        />
       </div>
     </AppShell>
   );

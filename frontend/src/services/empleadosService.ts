@@ -74,12 +74,15 @@ export type AfiliacionUpsert = {
 export function listarEmpleados(params?: {
   documento?: string;
   estado?: string;
+  limit?: number;
 }) {
   const q = new URLSearchParams();
   if (params?.documento) q.set("documento", params.documento);
   if (params?.estado) q.set("estado", params.estado);
+  // Backend default es 50; en listados/reportes pedimos el máximo permitido (200)
+  q.set("limit", String(params?.limit ?? 200));
   const qs = q.toString();
-  return apiRequest<Empleado[]>(`/empleados${qs ? `?${qs}` : ""}`);
+  return apiRequest<Empleado[]>(`/empleados?${qs}`);
 }
 
 export function obtenerEmpleado(id: number) {

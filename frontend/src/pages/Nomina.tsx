@@ -1,143 +1,235 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
+import NominaSummary from "../components/nomina/NominaSummary";
+import NominaTable, { type NominaRow } from "../components/nomina/NominaTable";
 import { apiRequest } from "../services/apiClient";
 import { getDashboard, type DashboardData } from "../services/dashboardService";
+import { listarProyectos, type Proyecto } from "../services/proyectosService";
 import "../styles/Nomina.css";
 
-type NominaRow = {
-  id_nomina: number;
-  periodo_inicio: string;
-  periodo_fin: string;
-  tipo_nomina: string;
-  estado_nomina: string;
-  total_pagado?: number;
-  cantidad_empleados?: number;
+type DetalleRow = {
+  id_detalle_nomina: number;
+  id_empleado: number;
+  horas_ordinarias: number;
+  horas_extra: number;
+  neto_pagar: number;
 };
 
 export default function Nomina() {
   const [stats, setStats] = useState<DashboardData | null>(null);
   const [nominas, setNominas] = useState<NominaRow[]>([]);
   const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+  const [detalles, setDetalles] = useState<DetalleRow[]>([]);
+  const [nominaSel, setNominaSel] = useState<number | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [proyectos, setProyectos] = useState<Proyecto[]>([]);
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     getDashboard().then(setStats).catch(() => {});
+    listarProyectos().then((p) => setProyectos(Array.isArray(p) ? p : [])).catch(() => {});
     apiRequest<NominaRow[]>("/nominas")
       .then((d) => setNominas(Array.isArray(d) ? d : []))
       .catch((e) => setError(e instanceof Error ? e.message : "No se pudo cargar nómina"));
   }, []);
 
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const verDetalles = async (id: number) => {
+    try {
+      setError("");
+      setNominaSel(id);
+      const d = await apiRequest<DetalleRow[]>(`/nominas/${id}/detalles`);
+      setDetalles(Array.isArray(d) ? d : []);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "No se pudieron cargar detalles");
+    }
+  };
+
+  const calcular = async (id: number) => {
+    try {
+      setBusyId(id);
+      setError("");
+      setMsg("");
+      const r = await apiRequest<{ message?: string; total_pagado?: number }>(
+        `/nominas/${id}/calcular`,
+        { method: "POST" }
+      );
+      setMsg(r.message || `Nómina #${id} calculada.`);
+      cargar();
+      await verDetalles(id);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al calcular");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const cambiarEstado = async (id: number, estado_nomina: string) => {
+    try {
+      setBusyId(id);
+      setError("");
+      await apiRequest(`/nominas/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ estado_nomina }),
+      });
+      setMsg(`Nómina #${id} → ${estado_nomina}`);
+      cargar();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "No se pudo actualizar estado");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <AppShell>
       <Breadcrumb items={[{ label: "Nómina" }]} />
       <div className="page-card" style={{ marginBottom: 20 }}>
-        <h1 className="page-title">Gestión de nómina</h1>
-        <p className="page-subtitle">
-          Resumen general y listado desde API. Gráficas por proyecto son vista previa visual.
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <h1 className="page-title">Panel de nómina</h1>
+            <p className="page-subtitle">
+              Listado, cálculo y aprobación. Para un nuevo periodo usa Generar nómina.
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Link
+              to="/nomina/generar"
+              className="agregar-btn-primario"
+              style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+            >
+              + Generar nómina
+            </Link>
+            <Link
+              to="/pila"
+              className="agregar-btn-secundario"
+              style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+            >
+              PILA
+            </Link>
+          </div>
+        </div>
         {error && <p style={{ color: "#b00020" }}>{error}</p>}
-        <div className="nomina-summary-grid" style={{ marginTop: 16 }}>
-          <div className="nomina-summary-card">
-            <div className="nomina-summary-icon blue"><i className="bi bi-people-fill"></i></div>
-            <div>
-              <span>Empleados activos</span>
-              <strong>{stats?.empleados_activos ?? "—"}</strong>
-              <Link to="/empleados"><small>Ver empleados →</small></Link>
-            </div>
-          </div>
-          <div className="nomina-summary-card">
-            <div className="nomina-summary-icon orange"><i className="bi bi-clock-fill"></i></div>
-            <div>
-              <span>Horas extra pend.</span>
-              <strong>{stats?.horas_extra_pendientes ?? "—"}</strong>
-              <Link to="/reportes/horas-extra"><small>Ver horas extra →</small></Link>
-            </div>
-          </div>
-          <div className="nomina-summary-card">
-            <div className="nomina-summary-icon purple"><i className="bi bi-file-earmark-text-fill"></i></div>
-            <div>
-              <span>Nóminas borrador</span>
-              <strong>{stats?.nominas_borrador ?? "—"}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Resumen visual por proyecto (mock hasta endpoints) */}
-        <h3 style={{ fontSize: 14, fontWeight: 700, margin: "22px 0 10px" }}>
-          Costo estimado por obra (vista previa)
-        </h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {[
-            { nombre: "Obra Norte", pct: 72, valor: "$ 85.2M" },
-            { nombre: "Torre Centro", pct: 45, valor: "$ 210.0M" },
-            { nombre: "Ampliación Sur", pct: 88, valor: "$ 42.5M" },
-            { nombre: "Puente Oriente", pct: 100, valor: "$ 156.8M" },
-          ].map((r) => (
-            <div key={r.nombre} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 130, fontSize: 13, fontWeight: 600 }}>{r.nombre}</span>
-              <div style={{ flex: 1, height: 12, background: "#f1f5f9", borderRadius: 999, overflow: "hidden" }}>
-                <div
-                  style={{
-                    width: `${r.pct}%`,
-                    height: "100%",
-                    background: "linear-gradient(90deg, #ea580c, #f59e0b)",
-                    borderRadius: 999,
-                  }}
-                />
-              </div>
-              <span style={{ width: 72, textAlign: "right", fontSize: 12, fontWeight: 700, color: "#0f172a" }}>
-                {r.valor}
-              </span>
-            </div>
-          ))}
-        </div>
-        <p style={{ marginTop: 10, fontSize: 12, color: "#94a3b8" }}>
-          Los valores de barra son ilustrativos. Se calcularán con datos reales de nómina por proyecto.
-        </p>
+        {msg && <p style={{ color: "#047857" }}>{msg}</p>}
+        <NominaSummary stats={stats} />
       </div>
 
       <div className="page-card">
         <h2 style={{ marginTop: 0, fontSize: 16 }}>Nóminas registradas</h2>
+        <NominaTable
+          rows={nominas}
+          busyId={busyId}
+          onVerDetalles={verDetalles}
+          onCalcular={calcular}
+          onAprobar={(id) => void cambiarEstado(id, "APROBADA")}
+          onPagar={(id) => void cambiarEstado(id, "PAGADA")}
+        />
+      </div>
+
+
+      <div className="page-card" style={{ marginTop: 20 }} id="consumo-obras">
+        <h2 style={{ marginTop: 0, fontSize: 16 }}>Consumo de nómina por obra</h2>
+        <p className="page-subtitle" style={{ marginTop: 0 }}>
+          Total liquidado por proyecto (suma de nóminas con obra asociada). Útil para el rol contador.
+        </p>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
-                <th style={{ padding: 10 }}>ID</th>
-                <th style={{ padding: 10 }}>Periodo</th>
-                <th style={{ padding: 10 }}>Tipo</th>
-                <th style={{ padding: 10 }}>Estado</th>
-                <th style={{ padding: 10 }}>Empleados</th>
-                <th style={{ padding: 10 }}>Total</th>
+                {["Obra", "Nóminas", "Empleados (última)", "Total pagado"].map((h) => (
+                  <th key={h} style={{ padding: 10 }}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {nominas.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>
-                    No hay nóminas o el endpoint no respondió datos.
-                  </td>
-                </tr>
-              ) : (
-                nominas.map((n) => (
-                  <tr key={n.id_nomina} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: 10 }}>{n.id_nomina}</td>
-                    <td style={{ padding: 10 }}>{n.periodo_inicio} → {n.periodo_fin}</td>
-                    <td style={{ padding: 10 }}>{n.tipo_nomina}</td>
-                    <td style={{ padding: 10 }}>{n.estado_nomina}</td>
-                    <td style={{ padding: 10 }}>{n.cantidad_empleados ?? "—"}</td>
+              {(() => {
+                const map = new Map<string, { nombre: string; count: number; total: number; emps: number }>();
+                for (const n of nominas) {
+                  const key = n.id_obra != null ? String(n.id_obra) : "sin-obra";
+                  const nombre =
+                    n.id_obra != null
+                      ? proyectos.find((p) => p.id_proyecto === n.id_obra)?.nombre || `Proyecto #${n.id_obra}`
+                      : "Sin obra (todos / general)";
+                  const prev = map.get(key) || { nombre, count: 0, total: 0, emps: 0 };
+                  prev.count += 1;
+                  prev.total += Number(n.total_pagado || 0);
+                  prev.emps = Math.max(prev.emps, Number(n.cantidad_empleados || 0));
+                  map.set(key, prev);
+                }
+                const rows = [...map.values()];
+                if (rows.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan={4} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>
+                        Aún no hay nóminas para agrupar por obra.
+                      </td>
+                    </tr>
+                  );
+                }
+                return rows.map((r) => (
+                  <tr key={r.nombre} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: 10 }}>{r.nombre}</td>
+                    <td style={{ padding: 10 }}>{r.count}</td>
+                    <td style={{ padding: 10 }}>{r.emps || "—"}</td>
                     <td style={{ padding: 10 }}>
-                      {n.total_pagado != null
-                        ? Number(n.total_pagado).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })
-                        : "—"}
+                      {r.total.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })}
                     </td>
                   </tr>
-                ))
-              )}
+                ));
+              })()}
             </tbody>
           </table>
         </div>
       </div>
+
+      {nominaSel != null && (
+        <div className="page-card" style={{ marginTop: 20 }}>
+          <h2 style={{ marginTop: 0, fontSize: 16 }}>
+            Detalles — nómina #{nominaSel}
+          </h2>
+          {detalles.length === 0 ? (
+            <p style={{ color: "#94a3b8" }}>
+              Sin líneas. Usa <strong>Calcular</strong> en la tabla.
+            </p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
+                    {["Detalle", "Empleado", "Horas ord.", "Horas extra", "Neto"].map((h) => (
+                      <th key={h} style={{ padding: 10 }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {detalles.map((d) => (
+                    <tr key={d.id_detalle_nomina} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: 10 }}>{d.id_detalle_nomina}</td>
+                      <td style={{ padding: 10 }}>#{d.id_empleado}</td>
+                      <td style={{ padding: 10 }}>{d.horas_ordinarias}</td>
+                      <td style={{ padding: 10 }}>{d.horas_extra}</td>
+                      <td style={{ padding: 10 }}>
+                        {Number(d.neto_pagar).toLocaleString("es-CO", {
+                          style: "currency",
+                          currency: "COP",
+                          maximumFractionDigits: 0,
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </AppShell>
   );
 }

@@ -1,23 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
+import AsistenciaForm from "../components/operaciones/AsistenciaForm";
+import { listarAsignaciones, type AsignacionOut } from "../services/asignacionesService";
 import { listarEmpleados, type Empleado } from "../services/empleadosService";
-import { listarUsuarios, nombreUsuario, type UsuarioPublic } from "../services/usuariosService";
+import { listarProyectos, type Proyecto } from "../services/proyectosService";
+import { listarUsuarios, type UsuarioPublic } from "../services/usuariosService";
 import { apiRequest } from "../services/apiClient";
 import "../styles/asistencia.css";
 
-const ESTADOS = [
-  { value: "PRESENTE", label: "Presente" },
-  { value: "RETARDO", label: "Retardo" },
-  { value: "INASISTENCIA", label: "Inasistencia" },
-];
+function hoyISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function ahoraHHMM() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 export default function Asistencia() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [usuariosMap, setUsuariosMap] = useState<Record<number, UsuarioPublic>>({});
+  const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+  const [asignaciones, setAsignaciones] = useState<AsignacionOut[]>([]);
   const [empleadoId, setEmpleadoId] = useState("");
-  const [fecha, setFecha] = useState("");
-  const [horaEntrada, setHoraEntrada] = useState("");
+  const [fecha, setFecha] = useState(hoyISO());
+  const [horaEntrada, setHoraEntrada] = useState(ahoraHHMM());
   const [horaSalida, setHoraSalida] = useState("");
   const [estado, setEstado] = useState("PRESENTE");
   const [loading, setLoading] = useState(true);
@@ -26,28 +34,113 @@ export default function Asistencia() {
   const [ok, setOk] = useState("");
 
   useEffect(() => {
-    Promise.all([listarEmpleados({ estado: "ACTIVO" }), listarUsuarios({ limit: 200 })])
-      .then(([d, users]) => {
+    Promise.all([
+      listarEmpleados({ estado: "ACTIVO" }),
+      listarUsuarios({ limit: 200 }),
+      listarProyectos().catch(() => [] as Proyecto[]),
+      listarAsignaciones().catch(() => [] as AsignacionOut[]),
+    ])
+      .then(([d, users, proys, asigs]) => {
         setEmpleados(Array.isArray(d) ? d : []);
         const map: Record<number, UsuarioPublic> = {};
-        for (const u of users) map[u.id_usuario] = u;
+        for (const u of users || []) map[u.id_usuario] = u;
         setUsuariosMap(map);
+        setProyectos(Array.isArray(proys) ? proys : []);
+        setAsignaciones(Array.isArray(asigs) ? asigs : []);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar"))
       .finally(() => setLoading(false));
   }, []);
 
-  const labelEmp = (e: Empleado) => {
-    const u = usuariosMap[e.id_usuario];
-    if (u) return nombreUsuario(u);
-    return `${e.cargo} · ${e.numero_documento}`;
+  const proyectosMap = useMemo(() => {
+    const m: Record<number, Proyecto> = {};
+    proyectos.forEach((p) => (m[p.id_proyecto] = p));
+    return m;
+  }, [proyectos]);
+
+  /** Valida que la fecha esté dentro del rango de al menos un proyecto activo del empleado. */
+  const validarFechaEnProyectos = (idEmp: string, fechaStr: string): string | null => {
+    const activas = asignaciones.filter(
+      (a) => a.activo !== false && String(a.id_empleado) === String(idEmp)
+    );
+    if (activas.length === 0) {
+      // Sin obra asignada: se permite (personal de oficina / RRHH)
+      return null;
+    }
+    const okEnAlguno = activas.some((a) => {
+      const p = proyectosMap[a.id_proyecto];
+      if (!p) return false;
+      const ini = String(p.fecha_inicio || "").slice(0, 10);
+      const fin = String(p.fecha_fin || "").slice(0, 10);
+      if (ini && fechaStr < ini) return false;
+      if (fin && fechaStr > fin) return false;
+      return true;
+    });
+    if (!okEnAlguno) {
+      const rangos = activas
+        .map((a) => {
+          const p = proyectosMap[a.id_proyecto];
+          if (!p) return null;
+          return `${p.nombre}: ${String(p.fecha_inicio).slice(0, 10)} → ${String(p.fecha_fin).slice(0, 10)}`;
+        })
+        .filter(Boolean)
+        .join("; ");
+      return (
+        "No se puede registrar asistencia fuera de las fechas del proyecto. " +
+        (rangos ? `Rangos: ${rangos}` : "Revisa inicio/fin de la obra.")
+      );
+    }
+    return null;
   };
 
   const guardar = async () => {
-    if (!empleadoId || !fecha || !horaEntrada) {
-      setError("Completa empleado, fecha y hora de entrada.");
+    if (!empleadoId) {
+      setError("Selecciona un empleado.");
       return;
     }
+    const hoy = hoyISO();
+    const esExcusa = estado === "EXCUSA";
+    const esInasistencia = estado === "INASISTENCIA";
+    const sinHoras = esExcusa || esInasistencia;
+
+    if (!fecha) {
+      setError("La fecha es obligatoria.");
+      return;
+    }
+    if (fecha > hoy) {
+      setError("No se permiten fechas futuras.");
+      return;
+    }
+    if (!esExcusa && fecha !== hoy) {
+      setError("Solo con Excusa se puede usar una fecha distinta de hoy.");
+      return;
+    }
+    if (!sinHoras && !horaEntrada) {
+      setError("Falta la hora de entrada.");
+      return;
+    }
+    if (horaSalida && horaEntrada && horaSalida < horaEntrada) {
+      setError("La hora de salida no puede ser anterior a la de entrada.");
+      return;
+    }
+
+    const errProy = validarFechaEnProyectos(empleadoId, fecha);
+    if (errProy) {
+      setError(errProy);
+      return;
+    }
+
+    const estadoApi = esExcusa ? "INASISTENCIA" : estado;
+    const entrada = sinHoras ? "00:00:00" : horaEntrada.length === 5 ? `${horaEntrada}:00` : horaEntrada;
+    const salida = sinHoras
+      ? null
+      : horaSalida
+        ? horaSalida.length === 5
+          ? `${horaSalida}:00`
+          : horaSalida
+        : null;
+    const observacion = esExcusa ? "EXCUSA" : esInasistencia ? "INASISTENCIA" : null;
+
     try {
       setSaving(true);
       setError("");
@@ -56,14 +149,23 @@ export default function Asistencia() {
         method: "POST",
         body: JSON.stringify({
           fecha,
-          hora_entrada: horaEntrada,
-          hora_salida: horaSalida || null,
-          estado_asistencia: estado,
+          hora_entrada: entrada,
+          hora_salida: salida,
+          estado_asistencia: estadoApi,
+          observacion,
         }),
       });
-      setOk("Asistencia registrada.");
-      setHoraEntrada("");
-      setHoraSalida("");
+      setOk(
+        esExcusa
+          ? "Excusa registrada (sin horas de jornada)."
+          : esInasistencia
+            ? "Inasistencia registrada (día no trabajado)."
+            : "Asistencia registrada."
+      );
+      if (estado === "PRESENTE" || estado === "RETARDO") {
+        setHoraEntrada(ahoraHHMM());
+        setHoraSalida("");
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "No se pudo guardar");
     } finally {
@@ -73,61 +175,33 @@ export default function Asistencia() {
 
   return (
     <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Asistencia", to: "/asistencia" },
-          { label: "Registrar" },
-        ]}
-      />
+      <Breadcrumb items={[{ label: "Asistencia", to: "/asistencia" }, { label: "Registrar" }]} />
       <div className="page-card">
         <h1 className="page-title">Registrar asistencia</h1>
-        <p className="page-subtitle">Entrada y salida del personal en obra.</p>
+        <p className="page-subtitle">
+          Presente/Retardo: hora = ahora. No se registra fuera de las fechas de inicio/fin del
+          proyecto al que esté asignado el empleado.
+        </p>
         {loading && <p style={{ marginTop: 12 }}>Cargando empleados…</p>}
-        {error && <p style={{ color: "#b00020", marginTop: 12 }}>{error}</p>}
         {ok && <p style={{ color: "#047857", marginTop: 12 }}>{ok}</p>}
-        <div className="agregar-form" style={{ marginTop: 20 }}>
-          <div>
-            <label className="agregar-label">Empleado *</label>
-            <select
-              className="agregar-input"
-              value={empleadoId}
-              onChange={(e) => setEmpleadoId(e.target.value)}
-              disabled={loading}
-            >
-              <option value="">Seleccionar</option>
-              {empleados.map((e) => (
-                <option key={e.id_empleado} value={e.id_empleado}>
-                  {labelEmp(e)} — {e.cargo}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="agregar-label">Fecha *</label>
-            <input className="agregar-input" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Hora entrada *</label>
-            <input className="agregar-input" type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Hora salida</label>
-            <input className="agregar-input" type="time" value={horaSalida} onChange={(e) => setHoraSalida(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Estado</label>
-            <select className="agregar-input" value={estado} onChange={(e) => setEstado(e.target.value)}>
-              {ESTADOS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="agregar-botones" style={{ marginTop: 20 }}>
-          <button className="agregar-btn-primario" type="button" onClick={guardar} disabled={saving || loading}>
-            {saving ? "Guardando…" : "Guardar asistencia"}
-          </button>
-        </div>
+        <AsistenciaForm
+          errorMsg={error}
+          empleados={empleados}
+          usuariosMap={usuariosMap}
+          empleadoId={empleadoId}
+          setEmpleadoId={setEmpleadoId}
+          fecha={fecha}
+          setFecha={setFecha}
+          horaEntrada={horaEntrada}
+          setHoraEntrada={setHoraEntrada}
+          horaSalida={horaSalida}
+          setHoraSalida={setHoraSalida}
+          estado={estado}
+          setEstado={setEstado}
+          loading={loading}
+          saving={saving}
+          onGuardar={guardar}
+        />
       </div>
     </AppShell>
   );

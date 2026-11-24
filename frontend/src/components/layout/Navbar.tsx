@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import logo from "../../assets/logobuydrax.png";
 import { clearSession, getToken } from "../../services/apiClient";
 import { logout as apiLogout } from "../../services/authService";
-import { etiquetaRol, esAdminRrhh, leerSesion } from "../../services/session";
+import { etiquetaRol, esAdminRrhh } from "../../services/session";
 
 type UsuarioSesion = {
   id: number;
@@ -39,6 +39,8 @@ export default function Navbar() {
   const [busqueda, setBusqueda] = useState("");
   const [usuario, setUsuario] = useState<UsuarioSesion | null>(() => leerUsuario());
   const perfilRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setUsuario(leerUsuario());
@@ -48,13 +50,20 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleClickFuera = (e: MouseEvent) => {
-      if (perfilRef.current && !perfilRef.current.contains(e.target as Node)) {
-        setPerfilAbierto(false);
-      }
+      const t = e.target as Node;
+      if (perfilRef.current && !perfilRef.current.contains(t)) setPerfilAbierto(false);
+      if (searchRef.current && !searchRef.current.contains(t)) setBusquedaAbierta(false);
     };
     document.addEventListener("mousedown", handleClickFuera);
     return () => document.removeEventListener("mousedown", handleClickFuera);
   }, []);
+
+  useEffect(() => {
+    if (busquedaAbierta) {
+      const id = window.setTimeout(() => inputRef.current?.focus(), 30);
+      return () => window.clearTimeout(id);
+    }
+  }, [busquedaAbierta]);
 
   const handleLogout = async () => {
     try {
@@ -67,28 +76,27 @@ export default function Navbar() {
     navigate("/");
   };
 
-  /** Búsqueda global: empleados, proyectos, reportes (no solo empleado) */
   const buscarGlobal = () => {
     const q = busqueda.trim();
+    setBusquedaAbierta(false);
     if (!q) {
       navigate("/empleados/buscar");
       return;
     }
     const lower = q.toLowerCase();
-    // Heurística simple de destinos similares
     if (lower.includes("proyecto") || lower.includes("obra")) {
       navigate(`/reportes/proyectos?q=${encodeURIComponent(q)}`);
-    } else if (lower.includes("asistencia") || lower.includes("turno")) {
+    } else if (lower.includes("asistencia") || lower.includes("falt")) {
       navigate(`/reportes/asistencia?q=${encodeURIComponent(q)}`);
+    } else if (lower.includes("turno")) {
+      navigate(`/reportes/turnos?q=${encodeURIComponent(q)}`);
     } else if (lower.includes("hora") || lower.includes("extra")) {
       navigate(`/reportes/horas-extra?q=${encodeURIComponent(q)}`);
-    } else if (lower.includes("nomina") || lower.includes("nómina") || lower.includes("pago")) {
+    } else if (lower.includes("nomina") || lower.includes("nómina") || lower.includes("pila")) {
       navigate(`/nomina?q=${encodeURIComponent(q)}`);
     } else {
-      navigate(`/empleados/buscar?nombre=${encodeURIComponent(q)}`);
+      navigate(`/empleados/buscar?q=${encodeURIComponent(q)}`);
     }
-    setBusquedaAbierta(false);
-    setBusqueda("");
   };
 
   const iniciales = (usuario?.nombre || "U")
@@ -100,34 +108,66 @@ export default function Navbar() {
 
   const rolLabel = etiquetaRol(usuario?.rol || usuario?.cargo);
   const admin = esAdminRrhh();
-  const cargoMostrar = usuario?.cargo && usuario.cargo !== usuario?.rol
-    ? usuario.cargo
-    : null;
+  const cargoMostrar =
+    usuario?.cargo && usuario.cargo !== usuario?.rol ? usuario.cargo : null;
 
   return (
     <header className="app-navbar">
       <div className="app-navbar__inner">
         <Link to="/dashboard" className="app-navbar__brand">
-          <img src={logo} alt="Buydrax" />
-          <span>Buydrax</span>
+          <img src={logo} alt="Buydrax" style={{ height: "50px", width: "auto" }} />
         </Link>
 
         <div className="app-navbar__actions">
-          <button
-            type="button"
-            className="app-navbar__icon-btn"
-            aria-label="Búsqueda global"
-            onClick={() => setBusquedaAbierta((v) => !v)}
-            title="Buscar en el sistema"
-          >
-            <i className="bi bi-search"></i>
-          </button>
+          <div className="app-navbar__search-wrap" ref={searchRef}>
+            <button
+              type="button"
+              className={`app-navbar__icon-btn${busquedaAbierta ? " is-active" : ""}`}
+              aria-label="Búsqueda global"
+              aria-expanded={busquedaAbierta}
+              onClick={() => {
+                setBusquedaAbierta((v) => !v);
+                setPerfilAbierto(false);
+              }}
+              title="Buscar en el sistema"
+            >
+              <i className="bi bi-search" />
+            </button>
+
+            {busquedaAbierta && (
+              <div className="app-navbar__search-panel" role="dialog" aria-label="Búsqueda">
+                <div className="app-navbar__search-panel-head">
+                  <i className="bi bi-search" />
+                  <span>Búsqueda global</span>
+                </div>
+                <div className="app-navbar__search-panel-body">
+                  <input
+                    ref={inputRef}
+                    type="search"
+                    placeholder="Empleados, proyectos, asistencia, nómina…"
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && buscarGlobal()}
+                  />
+                  <button type="button" className="app-navbar__search-go" onClick={buscarGlobal}>
+                    Buscar
+                  </button>
+                </div>
+                <p className="app-navbar__search-hint">
+                  Enter para buscar · Esc o clic fuera para cerrar
+                </p>
+              </div>
+            )}
+          </div>
 
           <div className="app-navbar__perfil" ref={perfilRef}>
             <button
               type="button"
               className="app-navbar__user"
-              onClick={() => setPerfilAbierto((v) => !v)}
+              onClick={() => {
+                setPerfilAbierto((v) => !v);
+                setBusquedaAbierta(false);
+              }}
             >
               <span
                 className="app-navbar__avatar"
@@ -146,19 +186,7 @@ export default function Navbar() {
                 <strong style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   {usuario?.nombre || "Usuario"}
                   {admin && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 800,
-                        letterSpacing: 0.6,
-                        color: "#92400e",
-                        background: "linear-gradient(135deg, #fde68a, #fbbf24)",
-                        padding: "2px 7px",
-                        borderRadius: 999,
-                        border: "1px solid #f59e0b",
-                      }}
-                      title="Administrador RRHH"
-                    >
+                    <span className="app-navbar__admin-pill" title="Administrador RRHH">
                       ADMIN
                     </span>
                   )}
@@ -173,7 +201,7 @@ export default function Navbar() {
                   {rolLabel}
                 </small>
               </span>
-              <i className="bi bi-chevron-down"></i>
+              <i className="bi bi-chevron-down" />
             </button>
 
             {perfilAbierto && (
@@ -189,32 +217,16 @@ export default function Navbar() {
                   )}
                 </div>
                 <button type="button" onClick={() => navigate("/perfiles")}>
-                  <i className="bi bi-person"></i> Mi información personal
+                  <i className="bi bi-person" /> Mi información personal
                 </button>
                 <button type="button" onClick={handleLogout}>
-                  <i className="bi bi-box-arrow-right"></i> Cerrar sesión
+                  <i className="bi bi-box-arrow-right" /> Cerrar sesión
                 </button>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {busquedaAbierta && (
-        <div className="app-navbar__search">
-          <input
-            type="search"
-            placeholder="Buscar empleados, proyectos, asistencia, nómina…"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && buscarGlobal()}
-            autoFocus
-          />
-          <button type="button" onClick={buscarGlobal}>
-            Buscar
-          </button>
-        </div>
-      )}
     </header>
   );
 }

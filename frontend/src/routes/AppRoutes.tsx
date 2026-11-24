@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import ForgotPassword from "../pages/forgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 import Dashboard from "../pages/Dashboard";
 import Users from "../pages/Users";
 import AgregarEmpleados from "../pages/AgregarEmpleados";
 import CrearProyecto from "../pages/CrearProyecto";
+import ListaProyectos from "../pages/ListaProyectos";
 import ListaEmpleados from "../pages/ListaEmpleados";
 import AsignacionEmpleado from "../pages/AsignacionEmpleado";
 import Supervisor from "../pages/Supervisor";
@@ -14,6 +16,7 @@ import Certificaciones from "../pages/Certificaciones";
 import Reportes from "../pages/Reportes";
 import Perfiles from "../pages/Perfiles";
 import Nomina from "../pages/Nomina";
+import GenerarNomina from "../pages/GenerarNomina";
 import RegistrarEmpleado from "../pages/RegistrarEmpleado";
 import BuscarEmpleado from "../pages/BuscarEmpleado";
 import EditarEmpleado from "../pages/EditarEmpleado";
@@ -26,15 +29,22 @@ import ReporteHorasExtra from "../pages/reportes/ReporteHorasExtra";
 import ReporteTurnos from "../pages/reportes/ReporteTurnos";
 import ReporteProyectos from "../pages/reportes/ReporteProyectos";
 import ReporteGeneral from "../pages/reportes/ReporteGeneral";
+import ExportarPersonal from "../pages/reportes/ExportarPersonal";
 import PortalEmpleado from "../pages/PortalEmpleado";
+import Pila from "../pages/Pila";
+import EmpresasDominios from "../pages/EmpresasDominios";
+import Soporte from "../pages/Soporte";
+
 
 function AppRoutes() {
   return (
     <BrowserRouter>
-      <Routes>
+      <Routes>  
         {/* Rutas públicas */}
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/soporte" element={<Soporte />} />
 
         {/* Rutas protegidas */}
         <Route
@@ -46,7 +56,14 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/users"
+          path="/empresas"
+          element={
+            <ProtectedRoute>
+              <EmpresasDominios />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/users"
           element={
             <ProtectedRoute>
               <Users />
@@ -123,6 +140,14 @@ function AppRoutes() {
         {/* Proyectos */}
         <Route
           path="/proyectos"
+          element={
+            <ProtectedRoute>
+              <ListaProyectos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/proyectos/crear"
           element={
             <ProtectedRoute>
               <CrearProyecto />
@@ -237,6 +262,14 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/reportes/exportar-personal"
+          element={
+            <ProtectedRoute>
+              <ExportarPersonal />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Nómina */}
         <Route
@@ -251,7 +284,15 @@ function AppRoutes() {
           path="/nomina/generar"
           element={
             <ProtectedRoute>
-              <Nomina />
+              <GenerarNomina />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pila"
+          element={
+            <ProtectedRoute>
+              <Pila />
             </ProtectedRoute>
           }
         />

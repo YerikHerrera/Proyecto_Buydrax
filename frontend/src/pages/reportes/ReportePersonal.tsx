@@ -1,61 +1,109 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Pagination from "../../components/ui/Pagination";
+import { useClientPagination } from "../../hooks/useClientPagination";
 import FiltrosBar from "../../components/reportes/FiltrosBar";
 import ReporteShell from "../../components/reportes/ReporteShell";
 import {
-  MOCK_PERSONAL,
-  MOCK_PROYECTOS,
-  badgeEstado,
-} from "../../data/mockReportes";
+  cargarDatosReportes,
+  nombreEmpleado,
+  proyectoDeEmpleado,
+  type ReportesBundle,
+} from "../../services/reportesService";
 
 export default function ReportePersonal() {
+  const [data, setData] = useState<ReportesBundle | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [proyecto, setProyecto] = useState("");
-  const [cargo, setCargo] = useState("");
   const [estado, setEstado] = useState("");
+  const [cargo, setCargo] = useState("");
   const [q, setQ] = useState("");
 
-  const cargos = useMemo(
-    () => Array.from(new Set(MOCK_PERSONAL.map((r) => r.cargo))).sort(),
-    []
-  );
+  useEffect(() => {
+    cargarDatosReportes()
+      .then(setData)
+      .catch((e) => setError(e instanceof Error ? e.message : "Error"))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filas = useMemo(() => {
-    return MOCK_PERSONAL.filter((r) => {
-      if (proyecto && r.proyecto !== proyecto) return false;
-      if (cargo && r.cargo !== cargo) return false;
+    if (!data) return [];
+    return data.empleados.map((e) => {
+      const proy = proyectoDeEmpleado(e.id_empleado, data.asignaciones, data.proyectosMap);
+      return {
+        id: e.id_empleado,
+        idProyecto: proy.id,
+        proyecto: proy.nombre,
+        nombre: nombreEmpleado(e, data.usuariosMap),
+        documento: e.numero_documento,
+        cargo: e.cargo || "—",
+        estado: e.estado_laboral || "—",
+      };
+    });
+  }, [data]);
+
+  const cargosOpts = useMemo(() => {
+    const set = new Set<string>();
+    for (const f of filas) if (f.cargo && f.cargo !== "—") set.add(f.cargo);
+    return [...set].sort();
+  }, [filas]);
+
+  const estadosOpts = useMemo(() => {
+    const set = new Set<string>();
+    for (const f of filas) if (f.estado) set.add(f.estado);
+    return [...set].sort();
+  }, [filas]);
+
+  const filtradas = useMemo(() => {
+    return filas.filter((r) => {
+      if (proyecto && String(r.idProyecto) !== proyecto) return false;
       if (estado && r.estado !== estado) return false;
+      if (cargo && r.cargo !== cargo) return false;
       if (q) {
         const s = q.toLowerCase();
         if (
           !r.nombre.toLowerCase().includes(s) &&
-          !r.documento.includes(s) &&
-          !r.cargo.toLowerCase().includes(s)
+          !r.cargo.toLowerCase().includes(s) &&
+          !String(r.documento).includes(s)
         )
           return false;
       }
       return true;
     });
-  }, [proyecto, cargo, estado, q]);
+  }, [filas, proyecto, estado, cargo, q]);
+
+  const { filas: filasPagina, pagina, totalPaginas, total, onAnterior, onSiguiente } =
+    useClientPagination(filtradas, 8);
+
+  const opcionesProyecto = useMemo(() => {
+    if (!data) return [];
+    return data.proyectos.map((p) => ({
+      value: String(p.id_proyecto),
+      label: p.nombre,
+    }));
+  }, [data]);
 
   return (
     <ReporteShell
-      titulo="Personal activo"
-      subtitulo="Reporte general por proyecto, nombre, cargo y estado (datos de vista previa)."
+      titulo="Personal activo / listado"
+      subtitulo="Todos los empleados de la BD con su proyecto asignado (si lo tienen)."
       crumbs={[
         { label: "Inicio", to: "/dashboard" },
         { label: "Reportes", to: "/reportes" },
-        { label: "Personal activo" },
+        { label: "Personal" },
       ]}
       accionHref="/empleados"
-      accionLabel="Ir a lista de empleados"
+      accionLabel="Lista de empleados"
     >
+      {error && <p style={{ color: "#b00020" }}>{error}</p>}
       <FiltrosBar
         busqueda={q}
         onBusqueda={setQ}
-        placeholderBusqueda="Nombre o documento…"
+        placeholderBusqueda="Nombre, documento o cargo…"
         onLimpiar={() => {
           setProyecto("");
-          setCargo("");
           setEstado("");
+          setCargo("");
           setQ("");
         }}
         filtros={[
@@ -64,10 +112,7 @@ export default function ReportePersonal() {
             label: "Proyecto",
             value: proyecto,
             onChange: setProyecto,
-            options: [
-              { value: "", label: "Todos" },
-              ...MOCK_PROYECTOS.map((p) => ({ value: p, label: p })),
-            ],
+            options: [{ value: "", label: "Todos" }, ...opcionesProyecto],
           },
           {
             key: "cargo",
@@ -76,7 +121,7 @@ export default function ReportePersonal() {
             onChange: setCargo,
             options: [
               { value: "", label: "Todos" },
-              ...cargos.map((c) => ({ value: c, label: c })),
+              ...cargosOpts.map((c) => ({ value: c, label: c })),
             ],
           },
           {
@@ -86,69 +131,51 @@ export default function ReportePersonal() {
             onChange: setEstado,
             options: [
               { value: "", label: "Todos" },
-              { value: "Activo", label: "Activo" },
-              { value: "Inactivo", label: "Inactivo" },
-              { value: "Vacaciones", label: "Vacaciones" },
+              ...estadosOpts.map((e) => ({ value: e, label: e })),
             ],
           },
         ]}
       />
-
-      <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid #e2e8f0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "#fff7ed", textAlign: "left" }}>
-              {["Proyecto", "Nombre", "Documento", "Cargo", "Supervisor", "Estado"].map((h) => (
-                <th key={h} style={{ padding: "12px 14px", fontWeight: 700, color: "#9a3412" }}>
+            <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
+              {["Proyecto", "Empleado", "Documento", "Cargo", "Estado"].map((h) => (
+                <th key={h} style={{ padding: 10 }}>
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filas.length === 0 ? (
+            {filasPagina.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
-                  No se encontraron empleados con los criterios seleccionados.
+                <td colSpan={5} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>
+                  {loading ? "Cargando…" : "Sin empleados."}
                 </td>
               </tr>
             ) : (
-              filas.map((r, idx) => {
-                const b = badgeEstado(r.estado);
-                return (
-                  <tr
-                    key={r.id}
-                    style={{ background: idx % 2 === 0 ? "#fff" : "#fafbfc", borderTop: "1px solid #f1f5f9" }}
-                  >
-                    <td style={{ padding: "12px 14px" }}>{r.proyecto}</td>
-                    <td style={{ padding: "12px 14px", fontWeight: 600 }}>{r.nombre}</td>
-                    <td style={{ padding: "12px 14px" }}>{r.documento}</td>
-                    <td style={{ padding: "12px 14px" }}>{r.cargo}</td>
-                    <td style={{ padding: "12px 14px" }}>{r.supervisor}</td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <span
-                        style={{
-                          padding: "3px 10px",
-                          borderRadius: 999,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          background: b.bg,
-                          color: b.color,
-                        }}
-                      >
-                        {r.estado}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })
+              filasPagina.map((r) => (
+                <tr key={r.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  <td style={{ padding: 10 }}>{r.proyecto}</td>
+                  <td style={{ padding: 10 }}>{r.nombre}</td>
+                  <td style={{ padding: 10 }}>{r.documento}</td>
+                  <td style={{ padding: 10 }}>{r.cargo}</td>
+                  <td style={{ padding: 10 }}>{r.estado}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
-      <p style={{ marginTop: 12, fontSize: 12, color: "#94a3b8" }}>
-        Vista previa con datos mock. Los endpoints se conectarán después.
-      </p>
+      <Pagination
+        pagina={pagina}
+        totalPaginas={totalPaginas}
+        total={total}
+        etiqueta="empleados"
+        onAnterior={onAnterior}
+        onSiguiente={onSiguiente}
+      />
     </ReporteShell>
   );
 }

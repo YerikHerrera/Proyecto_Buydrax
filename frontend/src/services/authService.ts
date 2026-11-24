@@ -83,3 +83,44 @@ export async function logout() {
     localStorage.removeItem("buydrax_demo_mode");
   }
 }
+
+export async function forgotPassword(correo: string) {
+  return apiRequest<{ message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ correo }),
+  });
+}
+
+export async function resetPassword(token: string, nueva_contrasena: string) {
+  return apiRequest<{ message: string }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, nueva_contrasena }),
+  });
+}
+
+/** Login con Google: el front obtiene el correo vía GIS/OAuth y lo envía al backend. */
+export async function loginGoogle(payload: {
+  correo: string;
+  nombres?: string;
+  apellidos?: string;
+  id_token?: string;
+}) {
+  const data = await apiRequest<LoginResponse>("/auth/google", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  const rol = data.usuario.rol || data.usuario.perfil?.nombre || null;
+  localStorage.setItem("access_token", data.access_token);
+  localStorage.setItem(
+    "usuario",
+    JSON.stringify({
+      id: data.usuario.id_usuario,
+      nombre: `${data.usuario.nombres} ${data.usuario.apellidos}`.trim(),
+      cargo: rol || "Usuario",
+      email: data.usuario.correo,
+      rol,
+      dominio: data.usuario.correo?.split("@")[1] || null,
+    })
+  );
+  return data;
+}

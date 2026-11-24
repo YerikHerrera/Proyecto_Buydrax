@@ -1,66 +1,138 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Pagination from "../../components/ui/Pagination";
+import { useClientPagination } from "../../hooks/useClientPagination";
 import FiltrosBar from "../../components/reportes/FiltrosBar";
 import ReporteShell from "../../components/reportes/ReporteShell";
-import { MOCK_ASISTENCIA, MOCK_PROYECTOS, badgeEstado } from "../../data/mockReportes";
+import {
+  cargarDatosReportes,
+  nombreEmpleado,
+  proyectoDeEmpleado,
+  type ReportesBundle,
+} from "../../services/reportesService";
 
-/** Mini calendario visual: días asistidos (verde), faltas (rojo), justificadas (amarillo) */
-function MiniCal({ asistidos, faltas, justificadas }: { asistidos: number; faltas: number; justificadas: number }) {
-  const total = Math.max(asistidos + faltas + justificadas, 1);
-  const cells: ("ok" | "falta" | "just")[] = [];
-  for (let i = 0; i < asistidos; i++) cells.push("ok");
-  for (let i = 0; i < justificadas; i++) cells.push("just");
-  for (let i = 0; i < faltas; i++) cells.push("falta");
-  while (cells.length < 20) cells.push("ok");
-  const show = cells.slice(0, 20);
-  const color = (t: string) =>
-    t === "ok" ? "#22c55e" : t === "falta" ? "#ef4444" : "#eab308";
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 2, maxWidth: 88 }} title={`Asistidos ${asistidos} · Faltas ${faltas} · Just. ${justificadas}`}>
-      {show.map((t, i) => (
-        <span
-          key={i}
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 2,
-            background: color(t),
-            opacity: i < total ? 1 : 0.25,
-          }}
-        />
-      ))}
-    </div>
-  );
+type Fila = {
+  id: number;
+  proyecto: string;
+  idProyecto: number | null;
+  nombre: string;
+  cargo: string;
+  mes: string;
+  diasAsistidos: number;
+  faltas: number;
+  justificadas: number;
+  sinRegistro: boolean;
+  estado: string;
+};
+
+function mesActual() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 export default function ReporteAsistencia() {
+  const [data, setData] = useState<ReportesBundle | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [proyecto, setProyecto] = useState("");
   const [estado, setEstado] = useState("");
   const [q, setQ] = useState("");
+  const [mes, setMes] = useState(mesActual());
 
-  const filas = useMemo(() => {
-    return MOCK_ASISTENCIA.filter((r) => {
-      if (proyecto && r.proyecto !== proyecto) return false;
+  useEffect(() => {
+    cargarDatosReportes()
+      .then(setData)
+      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filas: Fila[] = useMemo(() => {
+    if (!data) return [];
+    const { empleados, usuariosMap, asignaciones, proyectosMap, asistencias } = data;
+    return empleados.map((e) => {
+      const proy = proyectoDeEmpleado(e.id_empleado, asignaciones, proyectosMap);
+      const delMes = asistencias.filter(
+        (a) => a.id_empleado === e.id_empleado && String(a.fecha).startsWith(mes)
+      );
+      const totalReg = delMes.length;
+      // Solo PRESENTE / RETARDO cuentan como días trabajados (suman horas)
+      const asistidos = delMes.filter((a) => {
+        const e = (a.estado_asistencia || "").toUpperCase();
+        return e === "PRESENTE" || e === "RETARDO";
+      }).length;
+      // INASISTENCIA = falta (no suma horas). Excusa llega como INASISTENCIA + obs EXCUSA
+      const faltas = delMes.filter((a) => {
+        const e = (a.estado_asistencia || "").toUpperCase();
+        return e === "INASISTENCIA" || e.includes("FALTA");
+      }).length;
+      const justificadas = delMes.filter((a) => {
+        const e = (a.estado_asistencia || "").toUpperCase();
+        const obs = String((a as { observacion?: string }).observacion || "").toUpperCase();
+        return (
+          obs.includes("EXCUSA") ||
+          /JUSTIFIC|INCAPAC|PERMISO|EXCUSA/i.test(e + " " + obs)
+        );
+      }).length;
+      const sinRegistro = totalReg === 0;
+      let est = "Sin registros";
+      if (!sinRegistro) {
+        if (faltas > 0 && justificadas >= faltas) est = "Incapacidad / justificado";
+        else if (faltas > 0) est = "Con faltas";
+        else est = "Al día";
+      }
+      return {
+        id: e.id_empleado,
+        proyecto: proy.nombre,
+        idProyecto: proy.id,
+        nombre: nombreEmpleado(e, usuariosMap),
+        cargo: e.cargo || "—",
+        mes,
+        diasAsistidos: asistidos,
+        faltas,
+        justificadas,
+        sinRegistro,
+        estado: est,
+      };
+    });
+  }, [data, mes]);
+
+  const filtradas = useMemo(() => {
+    return filas.filter((r) => {
+      if (proyecto && String(r.idProyecto) !== proyecto && r.proyecto !== proyecto) return false;
       if (estado && r.estado !== estado) return false;
       if (q) {
         const s = q.toLowerCase();
-        if (!r.nombre.toLowerCase().includes(s) && !r.cargo.toLowerCase().includes(s)) return false;
+        if (!r.nombre.toLowerCase().includes(s) && !r.cargo.toLowerCase().includes(s))
+          return false;
       }
       return true;
     });
-  }, [proyecto, estado, q]);
+  }, [filas, proyecto, estado, q]);
+
+  const { filas: filasPagina, pagina, totalPaginas, total, onAnterior, onSiguiente } =
+    useClientPagination(filtradas, 8);
+
+  const opcionesProyecto = useMemo(() => {
+    if (!data) return [];
+    return data.proyectos.map((p) => ({
+      value: String(p.id_proyecto),
+      label: p.nombre,
+    }));
+  }, [data]);
 
   return (
     <ReporteShell
       titulo="Reporte de asistencia"
-      subtitulo="Por proyecto · nombre, cargo y estado. Vista mensual/quincenal con mini representación gráfica."
+      subtitulo="Datos reales de la BD. Empleados sin registros del mes aparecen como «Sin registros»."
       crumbs={[
         { label: "Inicio", to: "/dashboard" },
         { label: "Asistencia", to: "/asistencia" },
-        { label: "Reporte" },
+        { label: "Reporte asistencia" },
       ]}
       accionHref="/asistencia"
       accionLabel="Registrar asistencia"
     >
+      {error && <p style={{ color: "#b00020" }}>{error}</p>}
+      {loading && <p style={{ color: "#64748b" }}>Cargando…</p>}
       <FiltrosBar
         busqueda={q}
         onBusqueda={setQ}
@@ -69,6 +141,7 @@ export default function ReporteAsistencia() {
           setProyecto("");
           setEstado("");
           setQ("");
+          setMes(mesActual());
         }}
         filtros={[
           {
@@ -76,10 +149,7 @@ export default function ReporteAsistencia() {
             label: "Proyecto",
             value: proyecto,
             onChange: setProyecto,
-            options: [
-              { value: "", label: "Todos" },
-              ...MOCK_PROYECTOS.map((p) => ({ value: p, label: p })),
-            ],
+            options: [{ value: "", label: "Todos" }, ...opcionesProyecto],
           },
           {
             key: "estado",
@@ -90,80 +160,87 @@ export default function ReporteAsistencia() {
               { value: "", label: "Todos" },
               { value: "Al día", label: "Al día" },
               { value: "Con faltas", label: "Con faltas" },
-              { value: "Incapacidad", label: "Incapacidad" },
+              { value: "Sin registros", label: "Sin registros" },
+              { value: "Incapacidad / justificado", label: "Incapacidad / justificado" },
             ],
           },
         ]}
       />
+      <div style={{ marginBottom: 12 }}>
+        <label className="agregar-label">Mes</label>
+        <input
+          className="agregar-input"
+          type="month"
+          value={mes}
+          onChange={(e) => setMes(e.target.value)}
+          style={{ maxWidth: 220 }}
+        />
+      </div>
 
-      <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid #e2e8f0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "#fff7ed", textAlign: "left" }}>
-              {["Proyecto", "Empleado", "Cargo", "Periodo", "Asistencia (mes)", "Estado"].map((h) => (
-                <th key={h} style={{ padding: "12px 14px", fontWeight: 700, color: "#9a3412" }}>
-                  {h}
-                </th>
-              ))}
+            <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
+              {["Proyecto", "Empleado", "Cargo", "Mes", "Asistidos", "Faltas", "Justif.", "Estado"].map(
+                (h) => (
+                  <th key={h} style={{ padding: 10 }}>
+                    {h}
+                  </th>
+                )
+              )}
             </tr>
           </thead>
           <tbody>
-            {filas.length === 0 ? (
+            {filasPagina.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
-                  Sin registros con los filtros actuales.
+                <td colSpan={8} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>
+                  {loading ? "Cargando…" : "Sin empleados o sin coincidencias con el filtro."}
                 </td>
               </tr>
             ) : (
-              filas.map((r, idx) => {
-                const b = badgeEstado(r.estado);
-                return (
-                  <tr
-                    key={r.id}
-                    style={{ background: idx % 2 === 0 ? "#fff" : "#fafbfc", borderTop: "1px solid #f1f5f9" }}
-                  >
-                    <td style={{ padding: "12px 14px" }}>{r.proyecto}</td>
-                    <td style={{ padding: "12px 14px", fontWeight: 600 }}>{r.nombre}</td>
-                    <td style={{ padding: "12px 14px" }}>{r.cargo}</td>
-                    <td style={{ padding: "12px 14px" }}>{r.mes}</td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <MiniCal
-                          asistidos={r.diasAsistidos}
-                          faltas={r.faltas}
-                          justificadas={r.justificadas}
-                        />
-                        <span style={{ fontSize: 12, color: "#64748b" }}>
-                          {r.diasAsistidos}A · {r.faltas}F · {r.justificadas}J
-                        </span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <span
-                        style={{
-                          padding: "3px 10px",
-                          borderRadius: 999,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          background: b.bg,
-                          color: b.color,
-                        }}
-                      >
-                        {r.estado}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })
+              filasPagina.map((r) => (
+                <tr key={r.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  <td style={{ padding: 10 }}>{r.proyecto}</td>
+                  <td style={{ padding: 10 }}>{r.nombre}</td>
+                  <td style={{ padding: 10 }}>{r.cargo}</td>
+                  <td style={{ padding: 10 }}>{r.mes}</td>
+                  <td style={{ padding: 10 }}>{r.sinRegistro ? "—" : r.diasAsistidos}</td>
+                  <td style={{ padding: 10 }}>{r.sinRegistro ? "—" : r.faltas}</td>
+                  <td style={{ padding: 10 }}>{r.sinRegistro ? "—" : r.justificadas}</td>
+                  <td style={{ padding: 10 }}>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: "3px 8px",
+                        borderRadius: 999,
+                        background: r.sinRegistro
+                          ? "#f1f5f9"
+                          : r.estado === "Al día"
+                            ? "#d1fae5"
+                            : r.estado === "Con faltas"
+                              ? "#fef3c7"
+                              : "#e0e7ff",
+                        color: "#334155",
+                      }}
+                    >
+                      {r.estado}
+                    </span>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
-      <div style={{ marginTop: 10, display: "flex", gap: 14, fontSize: 12, color: "#64748b" }}>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#22c55e", borderRadius: 2, marginRight: 4 }} /> Asistido</span>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#ef4444", borderRadius: 2, marginRight: 4 }} /> Falta</span>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#eab308", borderRadius: 2, marginRight: 4 }} /> Justificada</span>
-      </div>
+      <Pagination
+        pagina={pagina}
+        totalPaginas={totalPaginas}
+        total={total}
+        etiqueta="empleados"
+        onAnterior={onAnterior}
+        onSiguiente={onSiguiente}
+      />
     </ReporteShell>
   );
 }
