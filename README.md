@@ -6,6 +6,8 @@ Buydrax centraliza la gestión de empleados, asistencia, turnos, asignación de 
 
 El proyecto fue desarrollado como parte de la formación **Tecnólogo en Análisis y Desarrollo de Software — SENA**.
 
+A partir de 2026 el sistema evolucionó a una arquitectura **SaaS Multi-Tenant** con soporte de dominios, soft delete, recuperación de contraseña, autenticación Google y cuadrillas como entidad independiente multi-proyecto.
+
 ---
 
 ## Equipo de desarrollo
@@ -24,7 +26,6 @@ El proyecto fue desarrollado como parte de la formación **Tecnólogo en Anális
 ## Stack tecnológico
 
 ### Frontend
-
 - React 19
 - TypeScript
 - Vite
@@ -34,7 +35,6 @@ El proyecto fue desarrollado como parte de la formación **Tecnólogo en Anális
 - jsPDF
 
 ### Backend
-
 - Python 3
 - FastAPI
 - SQLAlchemy
@@ -46,11 +46,10 @@ El proyecto fue desarrollado como parte de la formación **Tecnólogo en Anális
 - PostgreSQL mediante `psycopg2`
 
 ### Base de datos
-
 - PostgreSQL
 - Modelo relacional
 - SQLAlchemy como ORM
-- Scripts SQL para creación y configuración de la estructura de datos
+- Scripts SQL para creación, migraciones y configuración de la estructura de datos
 
 ---
 
@@ -77,13 +76,17 @@ Proyecto_Buydrax/
 │   │   ├── servicios/               → Lógica de negocio
 │   │   ├── nucleo/                  → Configuración y seguridad
 │   │   └── ...
+│   ├── scripts/
+│   │   └── sql/                     → Scripts de migración
 │   ├── requirements.txt
 │   └── .env.example
 │
 ├── docs/                             → Documentación técnica
 │
 ├── BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
-│                                      → Script principal de la BD
+│                                      → Script principal de la BD (versión base)
+│
+├── BASE_DE_DATOS_BUYDRAX_V2.sql       → Script unificado (base + migraciones + correcciones)
 │
 ├── SQL_RESET_PASSWORD_Admin123.sql
 │                                      → Script de configuración de usuarios
@@ -98,12 +101,17 @@ Proyecto_Buydrax/
 
 ## Roles del sistema
 
-Buydrax contempla diferentes perfiles de usuario con permisos y funcionalidades específicas:
+Buydrax contempla cinco perfiles de usuario:
 
-- **ADMIN_RRHH** — administración de recursos humanos.
-- **SUPERVISOR** — gestión y seguimiento del personal y proyectos asignados.
-- **CONTADOR** — procesos relacionados con nómina y gestión contable.
-- **EMPLEADO** — consulta y gestión de información correspondiente al empleado.
+| Perfil | Función general |
+|---|---|
+| `EMPRESA` | Administrador de plataforma (multi-tenant). Crea dominios, registra empresas y asigna el ADMIN_RRHH de cada tenant. |
+| `ADMIN_RRHH` | Administración de empleados, usuarios y procesos de RRHH **solo de su propio dominio**. |
+| `SUPERVISOR` | Gestión operativa de proyectos, cuadrillas y personal a cargo. |
+| `CONTADOR` | Procesos relacionados con nómina y contabilidad. |
+| `EMPLEADO` | Consulta y gestión de información propia. |
+
+El sistema utiliza autenticación mediante JWT (y opcionalmente Google) y las rutas e interfaces disponibles dependen del perfil del usuario autenticado.
 
 ---
 
@@ -111,27 +119,19 @@ Buydrax contempla diferentes perfiles de usuario con permisos y funcionalidades 
 
 Entre las funcionalidades implementadas se encuentran:
 
-- Gestión de empleados.
-- Gestión de usuarios y perfiles.
-- Autenticación mediante usuario y contraseña.
-- Autorización basada en roles.
-- Generación y validación de tokens JWT.
-- Gestión de proyectos.
-- Asignación de empleados a proyectos.
-- Registro y consulta de asistencia.
-- Gestión de turnos.
-- Registro de novedades.
-- Gestión de horas extra.
-- Certificaciones y documentación laboral.
-- Evaluaciones de desempeño.
-- Préstamos y viáticos.
-- Gestión de contratos.
-- Procesos de nómina.
-- Liquidaciones.
-- Desprendibles de nómina.
-- Gestión de PILA y aportes.
-- Solicitudes y notificaciones.
-- Reportes y consultas administrativas.
+- Gestión de empleados y usuarios con aislamiento por dominio (multi-tenant).
+- Soft delete (borrado lógico) de usuarios, empleados y proyectos.
+- Recuperación de contraseña por token (SMTP o log local).
+- Autenticación con Google (opcional, requiere `GOOGLE_CLIENT_ID`).
+- Gestión de proyectos y asignación de personal.
+- **Cuadrillas como entidad independiente** (una cuadrilla puede estar en varios proyectos).
+- Registro de asistencia vinculada a proyecto + cálculo automático de PRESENTE / RETARDO.
+- Gestión de turnos, novedades y horas extra.
+- Certificaciones, historial laboral y evaluaciones de desempeño.
+- Préstamos, viáticos, contratos y afiliaciones.
+- Procesos de nómina, liquidaciones, desprendibles y PILA.
+- Solicitudes, notificaciones y reportes administrativos.
+- Gestión de dominios / empresas (solo rol EMPRESA).
 
 ---
 
@@ -139,17 +139,34 @@ Entre las funcionalidades implementadas se encuentran:
 
 El proyecto utiliza **PostgreSQL**.
 
-El archivo:
+### Scripts disponibles
 
-```text
-BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
-```
+| Archivo | Descripción |
+|---|---|
+| `BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql` | Script base (tablas, ENUMs, datos de prueba) |
+| `2026_rol_empresa_dominios.sql` | Rol EMPRESA + tabla `empresa` + `usuarios.id_empresa` |
+| `2026_multitenant_dominio_soft_delete.sql` | Columnas `dominio` / `eliminado_en` + tabla `recuperacion_password` |
+| `2026_asistencia_id_proyecto.sql` | Columna `asistencia.id_proyecto` |
+| `2026_cuadrillas_entidad.sql` | Tablas `cuadrilla` y `cuadrilla_proyecto` |
+| `2026_fix_cuadrilla_creado_en.sql` | Parche DEFAULT NOW() en `cuadrilla.creado_en` (redundante si se usa el script unificado) |
+| `BASE_DE_DATOS_BUYDRAX_V2.sql` | **Script unificado recomendado** (base + migraciones + correcciones de aislamiento) |
+| `SQL_RESET_PASSWORD_Admin123.sql` | Establece contraseña de prueba `Admin123!` |
 
-contiene la estructura y configuración SQL necesaria para preparar las tablas del sistema.
+> Los scripts no crean automáticamente una base de datos. Deben ejecutarse sobre una base PostgreSQL existente.
 
-> El script no crea automáticamente una base de datos ni ejecuta un cambio de conexión. Debe ejecutarse sobre una base de datos PostgreSQL existente.
+### Orden recomendado de ejecución (desde cero)
 
-Para el entorno local de desarrollo utilizado durante la configuración del proyecto se trabajó con:
+1. `BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql` (o directamente el V2)
+2. `2026_rol_empresa_dominios.sql`
+3. `2026_multitenant_dominio_soft_delete.sql`
+4. `2026_asistencia_id_proyecto.sql`
+5. `2026_cuadrillas_entidad.sql`
+6. `2026_fix_cuadrilla_creado_en.sql` (opcional)
+7. `SQL_RESET_PASSWORD_Admin123.sql`
+
+**Recomendado:** usar el script unificado `BASE_DE_DATOS_BUYDRAX_V2.sql` que ya integra todo lo anterior más las correcciones de aislamiento multi-tenant en cuadrillas.
+
+Para el entorno local de desarrollo se trabajó con:
 
 ```text
 Host: localhost
@@ -176,12 +193,14 @@ En Windows:
 
 ```powershell
 python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
-Activarlo:
+En Linux / macOS:
 
-```powershell
-.\.venv\Scripts\Activate.ps1
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
 ### 3. Instalar dependencias
@@ -192,21 +211,7 @@ pip install -r requirements.txt
 
 ### 4. Crear el archivo `.env`
 
-Copiar:
-
-```text
-.env.example
-```
-
-como:
-
-```text
-.env
-```
-
-El archivo debe contener las variables necesarias para la conexión y configuración del backend.
-
-Ejemplo:
+Copiar `.env.example` a `.env` y configurar:
 
 ```env
 DATABASE_URL=postgresql+psycopg2://postgres:TU_PASSWORD@localhost:5432/postgres
@@ -218,9 +223,21 @@ APP_NAME=Buydrax API
 APP_ENV=development
 DEBUG=True
 API_PREFIX=/api
+
+# Autenticación Google (opcional)
+GOOGLE_CLIENT_ID=
+
+# SMTP para recuperación de contraseña (opcional)
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
 ```
 
-> El archivo `.env` contiene configuración local y secretos, por lo que **no debe subirse al repositorio**.
+> Sin SMTP configurado, los correos de recuperación se escriben en `backend/logs/correos_enviados.log`.
+
+El archivo `.env` **no debe subirse al repositorio**.
 
 ### 5. Ejecutar el backend
 
@@ -228,180 +245,69 @@ API_PREFIX=/api
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-La API estará disponible en:
-
-```text
-http://127.0.0.1:8000
-```
-
-Documentación interactiva:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-Especificación OpenAPI:
-
-```text
-http://127.0.0.1:8000/openapi.json
-```
-
-Endpoint de comprobación:
-
-```text
-http://127.0.0.1:8000/health
-```
+- API: http://127.0.0.1:8000
+- Swagger: http://127.0.0.1:8000/docs
+- Health: http://127.0.0.1:8000/health
 
 ---
 
 ## Configuración del frontend
 
-### 1. Entrar al frontend
-
 ```bash
 cd frontend
-```
-
-### 2. Instalar dependencias
-
-```bash
 npm install
 ```
 
-### 3. Configurar la URL de la API
-
-El proyecto incluye:
-
-```text
-.env.example
-```
-
-con la configuración correspondiente al backend:
+Configurar `.env` (a partir de `.env.example`):
 
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8000/api
-```
-
-Si se requiere una configuración local diferente, puede crearse un archivo `.env` a partir de esta plantilla.
-
-### 4. Ejecutar el frontend
-
-```bash
-npm run dev
-```
-
-Vite mostrará en la terminal la dirección local para acceder a la aplicación, normalmente:
-
-```text
-http://localhost:5173
-```
-
----
-
-## Usuarios de prueba
-
-Para facilitar las pruebas del sistema se dispone de usuarios configurados mediante el script:
-
-```text
-SQL_RESET_PASSWORD_Admin123.sql
-```
-
-Usuarios de referencia:
-
-| Usuario | Contraseña | Rol |
-|---|---|---|
-| claudia.cardenas@construandes.com.co | Admin123! | ADMIN_RRHH |
-| ricardo.gil@construandes.com.co | Admin123! | SUPERVISOR |
-| martha.gomez@construandes.com.co | Admin123! | EMPLEADO |
-
-> Estas credenciales corresponden al entorno académico/de desarrollo. No deben utilizarse como credenciales reales de producción.
-
----
-
-## Ejecución completa del proyecto
-
-Para ejecutar Buydrax localmente:
-
-### Terminal 1 — Backend
-
-```bash
-cd backend
-```
-
-Activar el entorno virtual:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
+VITE_GOOGLE_CLIENT_ID=          # mismo valor que GOOGLE_CLIENT_ID del backend (opcional)
 ```
 
 Ejecutar:
 
 ```bash
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-### Terminal 2 — Frontend
-
-```bash
-cd frontend
-npm install
 npm run dev
 ```
 
-Finalmente, acceder a la dirección indicada por Vite.
+Normalmente disponible en http://localhost:5173
 
 ---
 
-## Documentación técnica
+## Usuarios de prueba
 
-La documentación técnica del proyecto se encuentra en:
+Después de ejecutar el script de reset de contraseñas:
 
-```text
-docs/
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| plataforma@buydrax.local | Admin123! | EMPRESA |
+| claudia.cardenas@construandes.com.co | Admin123! | ADMIN_RRHH |
+| ricardo.gil@construandes.com.co | Admin123! | SUPERVISOR |
+| martha.gomez@construandes.com.co | Admin123! | EMPLEADO |
+
+> Estas credenciales son solo para el entorno académico/de desarrollo.
+
+---
+
+## Ejecución completa del proyecto
+
+**Terminal 1 — Backend**
+
+```bash
+cd backend
+source .venv/bin/activate   # o .\.venv\Scripts\Activate.ps1 en Windows
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Incluye documentación relacionada con:
+**Terminal 2 — Frontend**
 
-- Casos de uso.
-- Diagramas de actividades.
-- Diagrama de clases.
-- Modelo de dominio.
-- Modelo Entidad-Relación.
-- Modelo relacional.
-- Diccionario de datos.
-- Otros documentos utilizados durante el desarrollo.
-
-Los archivos fuente editables, cuando corresponda, se encuentran dentro de:
-
-```text
-docs/fuentes/
+```bash
+cd frontend
+npm run dev
 ```
 
----
-
-## Mockups y prototipos
-
-El diseño inicial de la aplicación fue desarrollado a partir de mockups y prototipos elaborados durante la etapa de diseño del proyecto.
-
-Los archivos originales de los mockups se mantienen en un espacio privado destinado al equipo de desarrollo.
-
-Las interfaces implementadas en React toman como referencia dichos diseños y fueron adaptadas durante el proceso de desarrollo.
-
----
-
-## Seguridad y configuración
-
-El backend utiliza:
-
-- Hash de contraseñas mediante bcrypt.
-- Autenticación mediante JWT.
-- Control de acceso basado en roles.
-- Variables de entorno para configuración sensible.
-- Validación de datos mediante Pydantic.
-
-Los archivos `.env` se encuentran excluidos del control de versiones mediante `.gitignore`.
-
-El repositorio incluye archivos `.env.example` como referencia para la configuración local.
+Abrir http://localhost:5173
 
 ---
 
@@ -413,15 +319,7 @@ La rama principal de desarrollo actual es:
 master
 ```
 
-La rama:
-
-```text
-main
-```
-
-se conserva por motivos históricos y documentales del proyecto.
-
-Para los commits se utiliza la siguiente convención:
+La rama `main` se conserva por motivos históricos.
 
 | Prefijo | Uso |
 |---|---|
@@ -436,7 +334,7 @@ Para los commits se utiliza la siguiente convención:
 
 ## Estado del proyecto
 
-Buydrax se encuentra en desarrollo académico y cuenta actualmente con una arquitectura funcional de frontend, backend y base de datos.
+Buydrax se encuentra en desarrollo académico y cuenta actualmente con una arquitectura funcional de frontend, backend y base de datos multi-tenant.
 
 El frontend se comunica con una API desarrollada en FastAPI y el backend utiliza PostgreSQL para la persistencia de datos.
 
@@ -453,4 +351,3 @@ El proyecto continúa evolucionando y podrá incorporar posteriormente mejoras r
 ## Licencia
 
 Proyecto de uso académico desarrollado en el marco del programa **Tecnólogo en Análisis y Desarrollo de Software del SENA**.
-
