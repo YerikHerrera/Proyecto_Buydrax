@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
+import HorasExtrasForm from "../components/operaciones/HorasExtrasForm";
 import { listarEmpleados, type Empleado } from "../services/empleadosService";
-import { listarUsuarios, nombreUsuario, type UsuarioPublic } from "../services/usuariosService";
+import { listarUsuarios, type UsuarioPublic } from "../services/usuariosService";
 import { apiRequest } from "../services/apiClient";
+import { maxHorasExtraPermitidas } from "../services/reportesService";
 import "../styles/HorasExtras.css";
-
-const TIPOS = ["DIURNA", "NOCTURNA", "DOMINICAL", "FESTIVA", "DIURNA_DOMINICAL"];
 
 export default function HorasExtras() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function HorasExtras() {
   const [motivo, setMotivo] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
-  const [cantidad, setCantidad] = useState("");
+  const [cantidad, setCantidad] = useState("2");
   const [tipoHora, setTipoHora] = useState("DIURNA");
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
@@ -25,35 +25,59 @@ export default function HorasExtras() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    listarEmpleados({ estado: "ACTIVO" })
-      .then((d) => setEmpleados(Array.isArray(d) ? d : []))
+    Promise.all([listarEmpleados({ estado: "ACTIVO" }), listarUsuarios({ limit: 200 })])
+      .then(([emps, users]) => {
+        setEmpleados(Array.isArray(emps) ? emps : []);
+        const map: Record<number, UsuarioPublic> = {};
+        for (const u of users || []) map[u.id_usuario] = u;
+        setUsuariosMap(map);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "Error"))
       .finally(() => setLoading(false));
   }, []);
 
-  const labelEmp = (e: Empleado) => {
-    const u = usuariosMap[e.id_usuario];
-    if (u) return nombreUsuario(u);
-    return `${e.cargo} · ${e.numero_documento}`;
+  const tope = useMemo(
+    () => maxHorasExtraPermitidas(fechaInicio, fechaFin),
+    [fechaInicio, fechaFin]
+  );
+
+  const onFechaInicio = (v: string) => {
+    setFechaInicio(v);
+    if (!fechaFin || fechaFin < v) setFechaFin(v);
   };
 
   const guardar = async () => {
-    if (!empleadoId || !motivo || !fechaInicio || !fechaFin || !cantidad) {
+    if (!empleadoId || !motivo.trim() || !fechaInicio || !fechaFin || !cantidad) {
       setError("Completa todos los campos obligatorios.");
+      return;
+    }
+    if (fechaInicio > fechaFin) {
+      setError("La fecha de inicio no puede ser posterior a la fecha de fin.");
+      return;
+    }
+    const horas = Number(cantidad);
+    if (!Number.isFinite(horas) || horas <= 0) {
+      setError("La cantidad de horas debe ser mayor que 0.");
+      return;
+    }
+    const max = maxHorasExtraPermitidas(fechaInicio, fechaFin);
+    if (horas > max) {
+      setError(
+        `Máximo ${max} h para ese rango de fechas (16 h el mismo día o 12 h por día).`
+      );
       return;
     }
     try {
       setSaving(true);
       setError("");
       setOk("");
-      // Backend real: POST /empleados/{id}/horas-extra (no POST /horas-extra)
       await apiRequest(`/empleados/${Number(empleadoId)}/horas-extra`, {
         method: "POST",
         body: JSON.stringify({
           motivo: motivo.trim(),
           fecha_inicio: fechaInicio,
           fecha_fin: fechaFin,
-          cantidad_horas: Number(cantidad),
+          cantidad_horas: horas,
           tipo_hora: tipoHora,
           archivo_soporte_url: "/soportes/he_pendiente.pdf",
         }),
@@ -68,60 +92,40 @@ export default function HorasExtras() {
 
   return (
     <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Asistencia", to: "/asistencia" },
-          { label: "Horas extras" },
-        ]}
-      />
+      <Breadcrumb items={[{ label: "Asistencia", to: "/asistencia" }, { label: "Horas extras" }]} />
       <div className="page-card">
         <h1 className="page-title">Horas extras</h1>
-        <p className="page-subtitle">Registro alineado a la API (estado PENDIENTE).</p>
+        <p className="page-subtitle">
+          Inicio ≤ fin. Mismo día: máx. 16 h. Varios días: máx. 12 h por día. Si es una sola
+          jornada, deja la misma fecha en ambos campos.
+        </p>
+        {fechaInicio && fechaFin && fechaInicio <= fechaFin && (
+          <p className="field-hint" style={{ marginBottom: 8 }}>
+            Tope para este rango: <strong>{tope} h</strong>
+          </p>
+        )}
         {error && <p style={{ color: "#b00020" }}>{error}</p>}
         {ok && <p style={{ color: "#047857" }}>{ok}</p>}
-        <div className="agregar-form" style={{ marginTop: 16 }}>
-          <div>
-            <label className="agregar-label">Empleado *</label>
-            <select className="agregar-input" value={empleadoId} onChange={(e) => setEmpleadoId(e.target.value)} disabled={loading}>
-              <option value="">Seleccionar</option>
-              {empleados.map((e) => (
-                <option key={e.id_empleado} value={e.id_empleado}>{labelEmp(e)}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="agregar-label">Motivo *</label>
-            <input className="agregar-input" value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={255} />
-          </div>
-          <div>
-            <label className="agregar-label">Fecha inicio *</label>
-            <input className="agregar-input" type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Fecha fin *</label>
-            <input className="agregar-input" type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Cantidad de horas *</label>
-            <input className="agregar-input" type="number" min="0.5" step="0.5" value={cantidad} onChange={(e) => setCantidad(e.target.value)} />
-          </div>
-          <div>
-            <label className="agregar-label">Tipo de hora</label>
-            <select className="agregar-input" value={tipoHora} onChange={(e) => setTipoHora(e.target.value)}>
-              {TIPOS.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="agregar-botones" style={{ marginTop: 20 }}>
-          <button className="agregar-btn-secundario" type="button" onClick={() => navigate("/asistencia")}>
-            Volver
-          </button>
-          <button className="agregar-btn-primario" type="button" onClick={guardar} disabled={saving || loading}>
-            {saving ? "Guardando…" : "Guardar horas extras"}
-          </button>
-        </div>
+        <HorasExtrasForm
+          empleados={empleados}
+          usuariosMap={usuariosMap}
+          empleadoId={empleadoId}
+          setEmpleadoId={setEmpleadoId}
+          motivo={motivo}
+          setMotivo={setMotivo}
+          fechaInicio={fechaInicio}
+          setFechaInicio={onFechaInicio}
+          fechaFin={fechaFin}
+          setFechaFin={setFechaFin}
+          cantidad={cantidad}
+          setCantidad={setCantidad}
+          tipoHora={tipoHora}
+          setTipoHora={setTipoHora}
+          loading={loading}
+          saving={saving}
+          onGuardar={guardar}
+          onVolver={() => navigate("/asistencia")}
+        />
       </div>
     </AppShell>
   );

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { menuPermitidoPorRol, esAdminRrhh, esEmpleado } from "../../services/session";
+import { menuPermitidoPorRol, esAdminRrhh, esEmpresa, esAdminOEmpresa, esEmpleado, esSupervisor, rolActual } from "../../services/session";
 
 type SubItem = { to: string; label: string };
 type Item = {
@@ -15,7 +15,8 @@ type Item = {
 export default function Sidebar() {
   const location = useLocation();
   const [abierto, setAbierto] = useState(false);
-  const perms = menuPermitidoPorRol();
+  const rolKey = rolActual();
+  const perms = useMemo(() => menuPermitidoPorRol(), [rolKey]);
 
   const MENU: Item[] = useMemo(() => {
     const items: Item[] = [
@@ -49,57 +50,65 @@ export default function Sidebar() {
         to: "/proyectos",
         icon: "bi-folder-fill",
         label: "Proyectos",
-        match: (p) => p.startsWith("/proyectos") || p.startsWith("/reportes/proyectos"),
+        match: (p) => p.startsWith("/proyectos"),
         visible: perms.proyectos,
         children: [
-          { to: "/proyectos", label: "Listado / Crear" },
-          { to: "/proyectos/asignacion", label: "Asignación de empleado" },
-          { to: "/proyectos/supervisor", label: "Supervisores" },
-          { to: "/reportes/proyectos", label: "Reporte general" },
+          { to: "/proyectos", label: "Listado de proyectos" },
+          ...(esAdminOEmpresa() ? [{ to: "/proyectos/crear", label: "Crear proyecto" }] : []),
+          ...(esAdminOEmpresa() || esSupervisor()
+            ? [
+                { to: "/proyectos/asignacion", label: "Asignación de empleado" },
+                { to: "/proyectos/cuadrillas", label: "Gestión de cuadrillas" },
+              ]
+            : []),
+          { to: "/proyectos/supervisor", label: esSupervisor() ? "Mi cuadrilla y proyectos" : "Supervisores y cuadrillas" },
         ],
       },
       {
         to: "/asistencia",
         icon: "bi-calendar-check-fill",
         label: "Asistencia",
-        match: (p) => p.startsWith("/asistencia") || p.startsWith("/reportes/asistencia") || p.startsWith("/reportes/horas-extra") || p.startsWith("/reportes/turnos"),
+        match: (p) => p.startsWith("/asistencia"),
         visible: perms.asistencia,
         children: [
           { to: "/asistencia", label: "Registrar asistencia" },
           { to: "/asistencia/turno", label: "Asignar turnos" },
           { to: "/asistencia/reporte", label: "Registrar horas extras" },
           { to: "/asistencia/validaciones", label: "Validar / aprobar" },
-          { to: "/reportes/asistencia", label: "Reporte de asistencia" },
-          { to: "/reportes/turnos", label: "Reporte de turnos" },
-          { to: "/reportes/horas-extra", label: "Reporte horas extra" },
         ],
       },
       {
         to: "/nomina",
         icon: "bi-cash-stack",
         label: "Nómina",
-        match: (p) => p.startsWith("/nomina"),
+        match: (p) => p.startsWith("/nomina") || p.startsWith("/pila"),
         visible: perms.nomina,
         children: [
           { to: "/nomina", label: "Panel de nómina" },
           { to: "/nomina/generar", label: "Generar nómina" },
+          { to: "/pila", label: "PILA / Seguridad social" },
         ],
       },
       {
         to: "/reportes",
         icon: "bi-bar-chart-fill",
         label: "Reportes",
-        match: (p) => p === "/reportes" || p.startsWith("/reportes/general"),
+        match: (p) =>
+          p === "/reportes" || p.startsWith("/reportes/"),
         visible: perms.reportes,
         children: [
           { to: "/reportes", label: "Centro de reportes" },
+          { to: "/reportes/asistencia", label: "Reporte de asistencia" },
+          { to: "/reportes/turnos", label: "Reporte de turnos" },
+          { to: "/reportes/horas-extra", label: "Reporte horas extra" },
+          { to: "/reportes/proyectos", label: "Reporte de proyectos" },
           { to: "/reportes/general", label: "Reporte general por proyecto" },
           { to: "/reportes/personal", label: "Personal activo" },
+          { to: "/reportes/exportar-personal", label: "Exportar personal / cuadrillas" },
         ],
       },
     ];
 
-    // Portal empleado (solo EMPLEADO)
     if (esEmpleado()) {
       items.push({
         to: "/portal",
@@ -109,6 +118,12 @@ export default function Sidebar() {
         visible: true,
         children: [
           { to: "/portal", label: "Inicio" },
+          { to: "/portal/asignacion", label: "Mi cuadrilla / proyecto" },
+          { to: "/portal/turnos", label: "Mis turnos" },
+          { to: "/portal/asistencia", label: "Mi asistencia" },
+          { to: "/portal/horas-extra", label: "Mis horas extra" },
+          { to: "/portal/certificaciones", label: "Mis certificaciones" },
+          { to: "/portal/perfil", label: "Mi perfil" },
           { to: "/portal/pagos", label: "Mis desprendibles" },
           { to: "/portal/prestamos", label: "Mis préstamos" },
           { to: "/portal/solicitudes", label: "Mis solicitudes" },
@@ -116,8 +131,7 @@ export default function Sidebar() {
       });
     }
 
-    // Usuarios solo admin
-    if (esAdminRrhh()) {
+    if (esAdminRrhh() || esEmpresa()) {
       items.push({
         to: "/users",
         icon: "bi-shield-lock-fill",
@@ -126,21 +140,31 @@ export default function Sidebar() {
         visible: true,
       });
     }
+    if (esEmpresa() || perms.empresas) {
+      items.push({
+        to: "/empresas",
+        icon: "bi-building",
+        label: "Empresas / dominios",
+        match: (p) => p.startsWith("/empresas"),
+        visible: true,
+      });
+    }
 
     return items.filter((i) => i.visible);
   }, [perms]);
 
-  const [expandidas, setExpandidas] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    MENU.forEach((m) => {
-      if (m.children?.length) init[m.to] = true;
-    });
-    return init;
-  });
+  const [expandidas, setExpandidas] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setAbierto(false);
-  }, [location.pathname]);
+    setExpandidas(() => {
+      const next: Record<string, boolean> = {};
+      MENU.forEach((m) => {
+        if (m.children?.length) next[m.to] = m.match(location.pathname);
+      });
+      return next;
+    });
+  }, [location.pathname, rolKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = (key: string) => {
     setExpandidas((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -177,10 +201,10 @@ export default function Sidebar() {
         {MENU.map((item) => {
           const active = item.match(location.pathname);
           const hasChildren = Boolean(item.children?.length);
-          const open = expandidas[item.to] ?? true;
+          const open = expandidas[item.to] ?? active;
 
           return (
-            <div key={item.to} className="sidebar-group">
+            <div key={item.to} className={`sidebar-group ${active ? "sidebar-group--active" : ""}`}>
               <div className="sidebar-group__row">
                 <Link
                   to={item.to}
@@ -195,7 +219,11 @@ export default function Sidebar() {
                     type="button"
                     className="sidebar-group__chevron"
                     aria-label={open ? "Contraer" : "Expandir"}
-                    onClick={() => toggle(item.to)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggle(item.to);
+                    }}
                   >
                     <i className={`bi ${open ? "bi-chevron-up" : "bi-chevron-down"}`}></i>
                   </button>
@@ -205,7 +233,9 @@ export default function Sidebar() {
               {hasChildren && open && (
                 <div className="sidebar-sub">
                   {item.children!.map((sub) => {
-                    const subActive = location.pathname === sub.to;
+                    const subActive =
+                      location.pathname === sub.to ||
+                      (sub.to !== item.to && location.pathname.startsWith(sub.to + "/"));
                     return (
                       <Link
                         key={sub.to}

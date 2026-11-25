@@ -4,6 +4,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from app.nucleo.dominio import extraer_dominio, normalizar_rol_principal
+from app.nucleo.tenant import dominio_de_usuario
 from app.nucleo.excepciones import (
     AuthorizationError,
     ConflictError,
@@ -47,33 +49,39 @@ class ServicioUsuarios:
         self.db = db
 
     def crear(self, data: UsuarioCreate, actor: Usuario) -> UsuarioPublic:
-        self._require_admin_rrhh(actor)
+        self._require_admin_o_empresa(actor)
 
         if self.repo.get_by_correo(data.correo):
             raise ConflictError("El correo ya está registrado")
 
-        perfil = self.repo.get_perfil_by_nombre(data.rol)
+        correo_norm = data.correo.lower().strip()
+        rol_norm = normalizar_rol_principal(data.rol) or (data.rol or "").strip().upper()
+        perfil = self.repo.get_perfil_by_nombre(rol_norm)
         if perfil is None:
             raise ValidationAppError(
-                f"Rol '{data.rol}' no existe en la tabla perfil"
+                f"Rol '{data.rol}' no es un rol principal válido "
+                f"(EMPRESA, ADMIN_RRHH, CONTADOR, SUPERVISOR, EMPLEADO). "
+                f"Los cargos como Plomero/Soldador van en el perfil laboral del empleado."
             )
 
-        self._validar_campos_especializados(data.rol, data)
+        self._validar_campos_especializados(rol_norm, data)
+        id_emp = self._validar_dominio_al_crear(actor, correo_norm, rol_norm)
 
         usuario = Usuario(
             id_perfil=perfil.id_perfil,
             nombres=data.nombres.strip(),
             apellidos=data.apellidos.strip(),
-            correo=data.correo.lower().strip(),
-            password_hash=hash_password(data.contrasena),
+            correo=correo_norm,
+            password_encriptado=hash_password(data.contrasena),
             estado=data.estado,
             foto_perfil=data.foto_perfil,
             idioma=data.idioma or "ES",
+            id_empresa=id_emp,
         )
         self.repo.add(usuario)
 
         # Crear fila del rol especializado cuando corresponde (1:1)
-        if data.rol == "SUPERVISOR":
+        if rol_norm == "SUPERVISOR":
             self.repo.add_supervisor(
                 Supervisor(
                     id_usuario=usuario.id_usuario,
@@ -81,7 +89,7 @@ class ServicioUsuarios:
                     cuadrilla_asignada=data.cuadrilla_asignada,
                 )
             )
-        elif data.rol == "CONTADOR":
+        elif rol_norm == "CONTADOR":
             self.repo.add_contador(
                 Contador(
                     id_usuario=usuario.id_usuario,
@@ -89,7 +97,7 @@ class ServicioUsuarios:
                     area_nomina=data.area_nomina,  # type: ignore
                 )
             )
-        elif data.rol == "ADMIN_RRHH":
+        elif rol_norm == "ADMIN_RRHH":
             self.repo.add_admin_rrhh(
                 AdminRrhh(
                     id_usuario=usuario.id_usuario,
@@ -112,6 +120,7 @@ class ServicioUsuarios:
             correo=filters.correo,
             rol=filters.rol.upper() if filters.rol else None,
             estado=filters.estado,
+            dominio=dominio_de_usuario(actor),
             skip=filters.skip,
             limit=filters.limit,
         )
@@ -156,7 +165,7 @@ class ServicioUsuarios:
         if "estado" in payload and payload["estado"] is not None:
             usuario.estado = payload["estado"]
         if "contrasena" in payload and payload["contrasena"]:
-            usuario.password_hash = hash_password(payload["contrasena"])
+            usuario.password_encriptado = hash_password(payload["contrasena"])
 
         if "rol" in payload and payload["rol"]:
             nuevo_rol = payload["rol"]
@@ -197,6 +206,54 @@ class ServicioUsuarios:
         return [RolPublic.model_validate(p) for p in perfiles]
 
     # --- helpers ---
+
+
+    def _rol_actor(self, actor: Usuario) -> str:
+        return (actor.perfil.nombre if actor.perfil else "").upper()
+
+    def _require_admin_o_empresa(self, actor: Usuario) -> None:
+        rol = self._rol_actor(actor)
+        if rol not in ("ADMIN_RRHH", "EMPRESA"):
+            raise AuthorizationError("Solo EMPRESA o ADMIN_RRHH pueden crear usuarios")
+
+    def _validar_dominio_al_crear(self, actor: Usuario, correo: str, rol_norm: str) -> int | None:
+        """
+        - EMPRESA: el correo debe usar un dominio YA registrado y activo.
+        - ADMIN_RRHH: solo su mismo dominio; no puede crear rol EMPRESA ni dominios ajenos.
+        """
+        from app.repositorios.repositorio_empresas import RepositorioEmpresas
+
+        dom = extraer_dominio(correo)
+        if not dom:
+            raise ValidationAppError("Correo sin dominio válido")
+
+        repo_e = RepositorioEmpresas(self.db)
+        empresa = repo_e.get_by_dominio(dom)
+        actor_rol = self._rol_actor(actor)
+
+        if actor_rol == "ADMIN_RRHH":
+            if rol_norm == "EMPRESA":
+                raise AuthorizationError("ADMIN_RRHH no puede crear el rol EMPRESA")
+            actor_dom = extraer_dominio(actor.correo)
+            if dom != actor_dom:
+                raise ValidationAppError(
+                    f"Solo puedes registrar usuarios del dominio @{actor_dom} "
+                    f"(intentaste @{dom}). Los dominios los gestiona el rol EMPRESA."
+                )
+            if empresa is None:
+                raise ValidationAppError(
+                    f"El dominio @{dom} no está registrado. Un usuario EMPRESA debe crearlo primero."
+                )
+            return empresa.id_empresa
+
+        # EMPRESA
+        if empresa is None:
+            raise ValidationAppError(
+                f"El dominio @{dom} no está registrado. Crea primero el dominio en Gestión de empresas."
+            )
+        if not empresa.activo:
+            raise ValidationAppError(f"El dominio @{dom} está inactivo")
+        return empresa.id_empresa
 
     def _require_admin_rrhh(self, actor: Usuario) -> None:
         rol = actor.perfil.nombre if actor.perfil else None

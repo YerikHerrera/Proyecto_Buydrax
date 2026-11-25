@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.modelos import Proyecto
 from app.nucleo.excepciones import NotFoundError, ValidationAppError
+from app.nucleo.tenant import dominio_de_usuario
 from app.repositorios.repositorio_proyectos import RepositorioProyectos
 from app.esquemas.negocio import ProyectoCreate, ProyectoUpdate
 
@@ -14,8 +15,8 @@ class ServicioProyectos:
     def __init__(self, db: Session):
         self.repo = RepositorioProyectos(db)
 
-    def listar(self, *, estado: Optional[str] = None) -> Sequence[Proyecto]:
-        return self.repo.listar(estado=estado)
+    def listar(self, *, estado: Optional[str] = None, dominio: Optional[str] = None) -> Sequence[Proyecto]:
+        return self.repo.listar(estado=estado, dominio=dominio)
 
     def obtener(self, id_proyecto: int) -> Proyecto:
         p = self.repo.get_by_id(id_proyecto)
@@ -23,7 +24,7 @@ class ServicioProyectos:
             raise NotFoundError("Proyecto no encontrado")
         return p
 
-    def crear(self, body: ProyectoCreate) -> Proyecto:
+    def crear(self, body: ProyectoCreate, actor=None) -> Proyecto:
         if body.fecha_inicio >= body.fecha_fin:
             raise ValidationAppError("fecha_inicio debe ser menor que fecha_fin")
         if self.repo.get_supervisor(body.id_supervisor) is None:
@@ -40,4 +41,9 @@ class ServicioProyectos:
     def suspender(self, id_proyecto: int) -> None:
         p = self.obtener(id_proyecto)
         p.estado_proyecto = "SUSPENDIDO"
+        self.repo.actualizar(p)
+
+    def eliminar_logico(self, id_proyecto: int) -> None:
+        p = self.obtener(id_proyecto)
+        p.estado_proyecto = "FINALIZADO"
         self.repo.actualizar(p)

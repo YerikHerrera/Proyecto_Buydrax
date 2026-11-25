@@ -1,0 +1,188 @@
+/* Con esto acomodamos el logo de soporte en la parte superior de la tarjeta y le damos un poco de espacio 
+al contenido para que no se superponga con el logo. */
+.fp-card.sp-card {
+  position: relative;
+  padding-top: 64px;
+}
+.fp-card.sp-card .sp-logo {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  width: 100px;
+  height: auto;
+  margin: 0;
+}
+
+.sp-info {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  text-align: left;
+}
+.sp-info p {
+  margin: 6px 0;
+}
+.sp-info i {
+  margin-right: 8px;
+  color: #f5b301;
+}
+.sp-textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+select.fp-input {
+  color-scheme: dark;
+}
+select.fp-input option {
+  background: #14152a;
+  color: #ffffff;
+}
+
+/* Soporte.css */
+
+.sp-info {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  text-align: left;
+  color: #c6cdd4;
+}
+
+.sp-info p {
+  margin: 6px 0;
+  display: flex;
+  align-items: center;
+}
+
+.sp-info i {
+  margin-right: 8px;
+  color: #f5b301; /* dorado de los iconos */
+  font-size: 15px;
+}
+
+.sp-textarea {
+  resize: vertical;
+  font-family: inherit;
+  min-height: 100px;
+}
+
+/* ========== Overrides para que coincida con la imagen ========== */
+
+/* Página y tarjeta */
+.fp-page {
+  background: #0b141b;
+  min-height: 100vh;
+}
+
+.fp-card {
+  background: #0b141b;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: none;
+}
+
+/* Logo */
+.fp-logo {
+  max-height: 42px;
+}
+
+/* Títulos */
+.fp-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.fp-subtitle {
+  color: #80878f;
+}
+
+/* Labels */
+.fp-label {
+  color: #c6cdd4;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+/* Inputs y select */
+.fp-input {
+  background: #101115 !important;
+  border: 1px solid #2a323c !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+}
+
+.fp-input::placeholder {
+  color: #6b7280;
+}
+
+.fp-input:focus {
+  border-color: #1065dc !important;
+  box-shadow: 0 0 0 2px rgba(16, 101, 220, 0.25);
+  outline: none;
+}
+
+/* Select */
+select.fp-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2380878f' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* Botón principal (azul de la imagen) */
+.fp-btn {
+  background: #1065dc !important;
+  border: none !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.fp-btn:hover {
+  background: #0d56c0 !important;
+}
+
+.fp-btn:active {
+  background: #0b4ba8 !important;
+}
+
+/* Mensaje de error */
+.fp-error {
+  color: #f87171;
+}
+
+/* Estado de éxito */
+.fp-exito {
+  text-align: center;
+}
+
+.fp-exito-icono {
+  color: #1065dc;
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+/* Link volver */
+.fp-volver {
+  color: #80878f;
+  margin-top: 20px;
+}
+
+.fp-volver:hover {
+  color: #c6cdd4;
+}
+
+.fp-volver i {
+  margin-right: 6px;
+}
+
+select.fp-input {
+  margin-bottom: 16px;
+}
+

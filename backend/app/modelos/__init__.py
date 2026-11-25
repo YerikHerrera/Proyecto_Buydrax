@@ -2,6 +2,8 @@
 
 from app.modelos.perfil_y_permisos import Perfil, Modulo, Accion, Permiso
 from app.modelos.usuario import Usuario
+from app.modelos.empresa import Empresa
+from app.modelos.recuperacion import RecuperacionPassword
 from app.modelos.roles_especiales import Supervisor, Contador, AdminRrhh
 from app.modelos.negocio import (
     Proyecto,
@@ -32,7 +34,7 @@ from app.modelos.negocio import (
 )
 
 __all__ = [
-    "Perfil", "Modulo", "Accion", "Permiso", "Usuario",
+    "Perfil", "Modulo", "Accion", "Permiso", "Usuario", "Empresa",
     "Supervisor", "Contador", "AdminRrhh", "Proyecto", "Empleado",
     "Afiliacion", "HistorialLaboral", "Certificacion", "Asistencia",
     "Turno", "Novedad", "HoraExtra", "Observacion", "EvaluacionDesempeno",
@@ -40,3 +42,5 @@ __all__ = [
     "Liquidacion", "Nomina", "DetalleNomina", "Desprendible", "Pila",
     "AporteEmpleado", "Solicitud", "Notificacion", "CambioConfiguracion",
 ]
+
+from app.modelos.negocio.cuadrilla import Cuadrilla, CuadrillaProyecto  # noqa: F401

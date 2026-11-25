@@ -9,3 +9,4 @@ from app.esquemas.negocio.nomina_liquidacion import *
 from app.esquemas.negocio.evaluacion_observacion import *
 from app.esquemas.negocio.solicitud_notificacion import *
 from app.esquemas.negocio.configuracion_sistema import *
+from app.esquemas.negocio.cuadrilla import *  # noqa: F401,F403

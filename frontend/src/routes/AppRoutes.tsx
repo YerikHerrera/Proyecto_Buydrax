@@ -1,19 +1,23 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import ForgotPassword from "../pages/forgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 import Dashboard from "../pages/Dashboard";
 import Users from "../pages/Users";
 import AgregarEmpleados from "../pages/AgregarEmpleados";
 import CrearProyecto from "../pages/CrearProyecto";
+import ListaProyectos from "../pages/ListaProyectos";
 import ListaEmpleados from "../pages/ListaEmpleados";
 import AsignacionEmpleado from "../pages/AsignacionEmpleado";
 import Supervisor from "../pages/Supervisor";
+import GestionCuadrillas from "../pages/GestionCuadrillas";
 import Asistencia from "../pages/asistencia";
 import HorasExtras from "../pages/HorasExtras";
 import Certificaciones from "../pages/Certificaciones";
 import Reportes from "../pages/Reportes";
 import Perfiles from "../pages/Perfiles";
 import Nomina from "../pages/Nomina";
+import GenerarNomina from "../pages/GenerarNomina";
 import RegistrarEmpleado from "../pages/RegistrarEmpleado";
 import BuscarEmpleado from "../pages/BuscarEmpleado";
 import EditarEmpleado from "../pages/EditarEmpleado";
@@ -26,22 +30,34 @@ import ReporteHorasExtra from "../pages/reportes/ReporteHorasExtra";
 import ReporteTurnos from "../pages/reportes/ReporteTurnos";
 import ReporteProyectos from "../pages/reportes/ReporteProyectos";
 import ReporteGeneral from "../pages/reportes/ReporteGeneral";
+import ExportarPersonal from "../pages/reportes/ExportarPersonal";
 import PortalEmpleado from "../pages/PortalEmpleado";
+import Pila from "../pages/Pila";
+import EmpresasDominios from "../pages/EmpresasDominios";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas públicas */}
+        {/* Públicas */}
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Rutas protegidas */}
+        {/* Dashboard / plataforma */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empresas"
+          element={
+            <ProtectedRoute>
+              <EmpresasDominios />
             </ProtectedRoute>
           }
         />
@@ -104,14 +120,6 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/empleados/cargos"
-          element={
-            <ProtectedRoute>
-              <ListaEmpleados />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/empleados/documentos"
           element={
             <ProtectedRoute>
@@ -119,10 +127,26 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/perfiles"
+          element={
+            <ProtectedRoute>
+              <Perfiles />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Proyectos */}
         <Route
           path="/proyectos"
+          element={
+            <ProtectedRoute>
+              <ListaProyectos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/proyectos/crear"
           element={
             <ProtectedRoute>
               <CrearProyecto />
@@ -145,8 +169,16 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/proyectos/cuadrillas"
+          element={
+            <ProtectedRoute>
+              <GestionCuadrillas />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Asistencia — páginas de acción existentes */}
+        {/* Asistencia */}
         <Route
           path="/asistencia"
           element={
@@ -180,7 +212,7 @@ function AppRoutes() {
           }
         />
 
-        {/* Reportes nuevos (visual / mock) */}
+        {/* Reportes */}
         <Route
           path="/reportes"
           element={
@@ -237,6 +269,14 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/reportes/exportar-personal"
+          element={
+            <ProtectedRoute>
+              <ExportarPersonal />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Nómina */}
         <Route
@@ -251,16 +291,15 @@ function AppRoutes() {
           path="/nomina/generar"
           element={
             <ProtectedRoute>
-              <Nomina />
+              <GenerarNomina />
             </ProtectedRoute>
           }
         />
-
         <Route
-          path="/perfiles"
+          path="/pila"
           element={
             <ProtectedRoute>
-              <Perfiles />
+              <Pila />
             </ProtectedRoute>
           }
         />
@@ -295,6 +334,54 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <PortalEmpleado seccion="solicitudes" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/asignacion"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="asignacion" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/turnos"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="turnos" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/asistencia"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="asistencia" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/horas-extra"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="horas-extra" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/certificaciones"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="certificaciones" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/perfil"
+          element={
+            <ProtectedRoute>
+              <PortalEmpleado seccion="perfil" />
             </ProtectedRoute>
           }
         />

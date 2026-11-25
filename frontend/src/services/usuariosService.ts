@@ -17,6 +17,10 @@ export type UsuarioCreate = {
   rol: string;
   idioma?: string;
   estado?: boolean;
+  area_responsable?: string;
+  numero_tarjeta_profesional?: string;
+  cuadrilla_asignada?: string;
+  area_nomina?: string;
 };
 
 type Paginated<T> = {

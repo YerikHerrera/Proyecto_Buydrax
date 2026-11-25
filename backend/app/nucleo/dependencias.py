@@ -64,4 +64,8 @@ def require_roles(*roles_permitidos: str):
 # Atajos tipados
 CurrentUser = Annotated[Usuario, Depends(get_current_user)]
 AdminRrhhUser = Annotated[Usuario, Depends(require_roles("ADMIN_RRHH"))]
+# RRHH, plataforma o supervisor de obra (cuadrillas / asignaciones operativas)
+AdminSupervisorUser = Annotated[
+    Usuario, Depends(require_roles("ADMIN_RRHH", "EMPRESA", "SUPERVISOR"))
+]
 DbSession = Annotated[Session, Depends(get_db)]

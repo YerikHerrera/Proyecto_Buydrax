@@ -3,13 +3,26 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.esquemas.comunes import ORMModel
 
 
 # Nombres de perfil soportados por el SQL de semillas
-PERFILES_VALIDOS = {"ADMIN_RRHH", "SUPERVISOR", "CONTADOR", "EMPLEADO"}
+PERFILES_VALIDOS = {"EMPRESA", "ADMIN_RRHH", "SUPERVISOR", "CONTADOR", "EMPLEADO"}
+
+def _correo_ok(v: str) -> str:
+    """Acepta user@dominio.tld e incluye .local (plataforma interna)."""
+    v = (v or "").strip().lower()
+    if "@" not in v or v.count("@") != 1 or " " in v:
+        raise ValueError("Correo electrónico no válido")
+    local, _, domain = v.partition("@")
+    if not local or not domain or "." not in domain:
+        raise ValueError("Correo electrónico no válido")
+    if any(not p for p in domain.split(".")):
+        raise ValueError("Correo electrónico no válido")
+    return v
+
 
 
 class PerfilPublic(ORMModel):
@@ -25,7 +38,7 @@ class UsuarioPublic(ORMModel):
     id_perfil: Optional[int] = None
     nombres: str
     apellidos: str
-    correo: EmailStr
+    correo: str  # str: permite @dominio.local (plataforma)
     estado: bool
     ultimo_acceso: Optional[datetime] = None
     foto_perfil: Optional[str] = None
@@ -45,7 +58,7 @@ class UsuarioCreate(BaseModel):
 
     nombres: str = Field(..., min_length=1, max_length=60)
     apellidos: str = Field(..., min_length=1, max_length=60)
-    correo: EmailStr
+    correo: str = Field(..., min_length=5, max_length=100)
     contrasena: str = Field(..., min_length=8, max_length=128)
     rol: str = Field(..., description="ADMIN_RRHH | SUPERVISOR | CONTADOR | EMPLEADO")
     idioma: str = Field(default="ES", max_length=5)
@@ -57,6 +70,11 @@ class UsuarioCreate(BaseModel):
     cuadrilla_asignada: Optional[str] = Field(default=None, max_length=60)
     area_nomina: Optional[str] = Field(default=None, max_length=30)
     area_responsable: Optional[str] = Field(default=None, max_length=60)
+
+    @field_validator("correo")
+    @classmethod
+    def validar_correo(cls, v: str) -> str:
+        return _correo_ok(v)
 
     @field_validator("rol")
     @classmethod
@@ -74,7 +92,7 @@ class UsuarioUpdate(BaseModel):
 
     nombres: Optional[str] = Field(default=None, min_length=1, max_length=60)
     apellidos: Optional[str] = Field(default=None, min_length=1, max_length=60)
-    correo: Optional[EmailStr] = None
+    correo: Optional[str] = Field(default=None, min_length=5, max_length=100)
     contrasena: Optional[str] = Field(default=None, min_length=8, max_length=128)
     rol: Optional[str] = None
     idioma: Optional[str] = Field(default=None, max_length=5)
@@ -86,6 +104,13 @@ class UsuarioUpdate(BaseModel):
     cuadrilla_asignada: Optional[str] = Field(default=None, max_length=60)
     area_nomina: Optional[str] = Field(default=None, max_length=30)
     area_responsable: Optional[str] = Field(default=None, max_length=60)
+
+    @field_validator("correo")
+    @classmethod
+    def validar_correo(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        return _correo_ok(v)
 
     @field_validator("rol")
     @classmethod
@@ -106,7 +131,7 @@ class UsuarioListFilters(BaseModel):
     rol: Optional[str] = None
     estado: Optional[bool] = None
     skip: int = Field(default=0, ge=0)
-    limit: int = Field(default=50, ge=1, le=200)
+    limit: int = Field(default=50, ge=1, le=1000)
 
 
 class RolPublic(ORMModel):

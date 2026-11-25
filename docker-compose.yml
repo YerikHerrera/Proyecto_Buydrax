@@ -1,0 +1,58 @@
+# Buydrax: front + API + Postgres
+# Requiere .env en esta misma carpeta (raíz del proyecto)
+#
+#   docker compose up --build
+#   DBeaver → localhost:5433 → ejecutar SQL
+#   http://localhost:5173  |  http://localhost:8000/docs
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: buydrax-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-buydrax}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-buydrax}
+      POSTGRES_DB: ${DB_NAME:-buydrax}
+    ports:
+      - "5433:5432"
+    volumes:
+      - buydrax_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-buydrax} -d ${DB_NAME:-buydrax}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: buydrax-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      APP_ENV: ${APP_ENV:-development}
+      DEBUG: ${DEBUG:-true}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api}
+    container_name: buydrax-web
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  buydrax_pgdata:

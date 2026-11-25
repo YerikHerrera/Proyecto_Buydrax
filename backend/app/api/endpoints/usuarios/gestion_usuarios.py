@@ -43,7 +43,7 @@ def listar_usuarios(
     rol: Optional[str] = Query(default=None, description="ADMIN_RRHH|SUPERVISOR|CONTADOR|EMPLEADO"),
     estado: Optional[bool] = Query(default=None),
     skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=50, ge=1, le=200),
+    limit: int = Query(default=50, ge=1, le=1000),
 ) -> PaginatedResponse[UsuarioPublic]:
     """
     HU-26 · GET /usuarios

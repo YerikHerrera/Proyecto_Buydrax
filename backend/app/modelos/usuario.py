@@ -1,4 +1,4 @@
-"""Tabla usuarios (SQL auditado)."""
+"""Tabla usuarios — id_empresa opcional (tras script 2026_rol_empresa_dominios.sql)."""
 
 from datetime import datetime
 
@@ -20,13 +20,21 @@ class Usuario(Base):
     nombres: Mapped[str] = mapped_column(String(60), nullable=False)
     apellidos: Mapped[str] = mapped_column(String(60), nullable=False)
     correo: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_encriptado: Mapped[str] = mapped_column(
+        "password_encriptado", String(255), nullable=False
+    )
     estado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     ultimo_acceso: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     foto_perfil: Mapped[str | None] = mapped_column(String(255), nullable=True)
     idioma: Mapped[str] = mapped_column(String(5), nullable=False, default="ES")
+    id_empresa: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("empresa.id_empresa", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
 
     perfil: Mapped["Perfil | None"] = relationship("Perfil", back_populates="usuarios")
+    empresa: Mapped["Empresa | None"] = relationship("Empresa", back_populates="usuarios")
     supervisor: Mapped["Supervisor | None"] = relationship(
         "Supervisor", back_populates="usuario", uselist=False
     )
@@ -40,3 +48,4 @@ class Usuario(Base):
 
 from app.modelos.perfil_y_permisos import Perfil  # noqa: E402
 from app.modelos.roles_especiales import Supervisor, Contador, AdminRrhh  # noqa: E402
+from app.modelos.empresa import Empresa  # noqa: E402

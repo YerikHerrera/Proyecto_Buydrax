@@ -1,52 +1,74 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import Pagination from "../../components/ui/Pagination";
+import { useClientPagination } from "../../hooks/useClientPagination";
 import FiltrosBar from "../../components/reportes/FiltrosBar";
 import ReporteShell from "../../components/reportes/ReporteShell";
 import {
-  MOCK_PROYECTOS_DET,
-  badgeEstado,
-  formatoCOP,
-} from "../../data/mockReportes";
-
-function BarraAvance({ pct }: { pct: number }) {
-  const color = pct >= 90 ? "#16a34a" : pct >= 50 ? "#f59e0b" : "#ea580c";
-  return (
-    <div style={{ minWidth: 120 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 4 }}>
-        <span>Avance</span>
-        <strong style={{ color }}>{pct}%</strong>
-      </div>
-      <div style={{ height: 8, borderRadius: 999, background: "#f1f5f9", overflow: "hidden" }}>
-        <div style={{ width: `${Math.min(100, pct)}%`, height: "100%", background: color, borderRadius: 999, transition: "width 0.3s" }} />
-      </div>
-    </div>
-  );
-}
+  cargarDatosReportes,
+  type ReportesBundle,
+} from "../../services/reportesService";
 
 export default function ReporteProyectos() {
+  const [data, setData] = useState<ReportesBundle | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [estado, setEstado] = useState("");
   const [q, setQ] = useState("");
 
+  useEffect(() => {
+    cargarDatosReportes()
+      .then(setData)
+      .catch((e) => setError(e instanceof Error ? e.message : "Error"))
+      .finally(() => setLoading(false));
+  }, []);
+
   const filas = useMemo(() => {
-    return MOCK_PROYECTOS_DET.filter((r) => {
+    if (!data) return [];
+    return data.proyectos.map((p) => {
+      const asignados = data.asignaciones.filter(
+        (a) => a.id_proyecto === p.id_proyecto && a.activo !== false
+      );
+      return {
+        id: p.id_proyecto,
+        nombre: p.nombre,
+        ubicacion: p.ubicacion_calle || "—",
+        estado: p.estado_proyecto || "—",
+        fechaInicio: p.fecha_inicio,
+        fechaFin: p.fecha_fin,
+        empleados: asignados.length,
+        descripcion: p.descripcion || "",
+      };
+    });
+  }, [data]);
+
+  const estadosOpts = useMemo(() => {
+    const set = new Set<string>();
+    for (const f of filas) if (f.estado) set.add(f.estado);
+    return [...set].sort();
+  }, [filas]);
+
+  const filtradas = useMemo(() => {
+    return filas.filter((r) => {
       if (estado && r.estado !== estado) return false;
       if (q) {
         const s = q.toLowerCase();
         if (
           !r.nombre.toLowerCase().includes(s) &&
-          !r.supervisor.toLowerCase().includes(s) &&
           !r.ubicacion.toLowerCase().includes(s)
         )
           return false;
       }
       return true;
     });
-  }, [estado, q]);
+  }, [filas, estado, q]);
+
+  const { filas: filasPagina, pagina, totalPaginas, total, onAnterior, onSiguiente } =
+    useClientPagination(filtradas, 8);
 
   return (
     <ReporteShell
-      titulo="Reporte general de proyectos"
-      subtitulo="Nombre, empleados, supervisor, presupuesto, fechas y % de finalización."
+      titulo="Reporte de proyectos / obras"
+      subtitulo="Proyectos reales de la BD. Personal = asignaciones activas. (No hay presupuesto en el modelo actual.)"
       crumbs={[
         { label: "Inicio", to: "/dashboard" },
         { label: "Proyectos", to: "/proyectos" },
@@ -55,10 +77,11 @@ export default function ReporteProyectos() {
       accionHref="/proyectos"
       accionLabel="Crear / listar proyectos"
     >
+      {error && <p style={{ color: "#b00020" }}>{error}</p>}
       <FiltrosBar
         busqueda={q}
         onBusqueda={setQ}
-        placeholderBusqueda="Proyecto, supervisor o ubicación…"
+        placeholderBusqueda="Proyecto o ubicación…"
         onLimpiar={() => {
           setEstado("");
           setQ("");
@@ -71,72 +94,56 @@ export default function ReporteProyectos() {
             onChange: setEstado,
             options: [
               { value: "", label: "Todos" },
-              { value: "En curso", label: "En curso" },
-              { value: "Finalizado", label: "Finalizado" },
-              { value: "Suspendido", label: "Suspendido" },
+              ...estadosOpts.map((e) => ({ value: e, label: e })),
             ],
           },
         ]}
       />
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14, marginBottom: 20 }}>
-        {filas.map((p) => {
-          const b = badgeEstado(p.estado);
-          return (
-            <div
-              key={p.id}
-              style={{
-                background: "#fff",
-                border: "1px solid #e2e8f0",
-                borderRadius: 14,
-                padding: 16,
-                transition: "box-shadow 0.15s, transform 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = "0 10px 24px rgba(15,23,42,0.08)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.transform = "none";
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{p.nombre}</h3>
-                <span style={{ padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 700, background: b.bg, color: b.color }}>
-                  {p.estado}
-                </span>
-              </div>
-              <p style={{ margin: "0 0 8px", fontSize: 12, color: "#64748b" }}>
-                <i className="bi bi-geo-alt" /> {p.ubicacion}
-              </p>
-              <p style={{ margin: "0 0 4px", fontSize: 13 }}>
-                <strong>Supervisor:</strong> {p.supervisor}
-              </p>
-              <p style={{ margin: "0 0 4px", fontSize: 13 }}>
-                <strong>Empleados:</strong> {p.empleados}
-              </p>
-              <p style={{ margin: "0 0 10px", fontSize: 13 }}>
-                <strong>Presupuesto:</strong> {formatoCOP(p.presupuesto)}
-              </p>
-              <BarraAvance pct={p.avance} />
-              <p style={{ margin: "10px 0 0", fontSize: 11, color: "#94a3b8" }}>
-                {p.fechaInicio} → {p.fechaFin}
-              </p>
-            </div>
-          );
-        })}
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
+              {["Proyecto", "Ubicación", "Estado", "Inicio", "Fin", "Personal asignado"].map(
+                (h) => (
+                  <th key={h} style={{ padding: 10 }}>
+                    {h}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {filasPagina.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>
+                  {loading ? "Cargando…" : "No hay proyectos."}
+                </td>
+              </tr>
+            ) : (
+              filasPagina.map((r) => (
+                <tr key={r.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  <td style={{ padding: 10 }}>
+                    <strong>{r.nombre}</strong>
+                  </td>
+                  <td style={{ padding: 10 }}>{r.ubicacion}</td>
+                  <td style={{ padding: 10 }}>{r.estado}</td>
+                  <td style={{ padding: 10 }}>{r.fechaInicio}</td>
+                  <td style={{ padding: 10 }}>{r.fechaFin}</td>
+                  <td style={{ padding: 10 }}>{r.empleados}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-
-      {filas.length === 0 && (
-        <p style={{ textAlign: "center", color: "#64748b", padding: 24 }}>No hay proyectos con esos filtros.</p>
-      )}
-
-      <p style={{ fontSize: 13 }}>
-        <Link to="/proyectos/supervisor" style={{ color: "#ea580c", fontWeight: 600 }}>
-          Ver supervisores y cuadrillas →
-        </Link>
-      </p>
+      <Pagination
+        pagina={pagina}
+        totalPaginas={totalPaginas}
+        total={total}
+        etiqueta="proyectos"
+        onAnterior={onAnterior}
+        onSiguiente={onSiguiente}
+      />
     </ReporteShell>
   );
 }

@@ -1,20 +1,29 @@
 ================================================================================
 BUYDRAX - CREDENCIALES DE PRUEBA Y GUÍA DE INSTALACIÓN
 ================================================================================
-Fecha: 2026-09-04
-Proyecto: Buydrax (Frontend React + Backend FastAPI + PostgreSQL)
+Fecha: 2026-09-17
+Proyecto: Buydrax (Frontend React + TypeScript + Vite + Backend FastAPI + PostgreSQL)
+
+Este documento explica cómo reconstruir y ejecutar el proyecto desde un equipo
+nuevo. No contiene secretos reales ni requiere copiar ningún archivo .env desde
+otro equipo.
 
 --------------------------------------------------------------------------------
-1. USUARIOS DE PRUEBA (después de ejecutar el SQL de reset de contraseñas)
+1. USUARIOS DE PRUEBA
 --------------------------------------------------------------------------------
 
-IMPORTANTE: La contraseña de TODOS los usuarios es la misma después de
-ejecutar el script SQL_RESET_PASSWORD_Admin123.sql:
+Después de ejecutar el script:
+
+    SQL_RESET_PASSWORD_Admin123.sql
+
+los usuarios de prueba pueden iniciar sesión utilizando:
 
     Contraseña: Admin123!
 
-Los hashes originales del script principal NO permiten login con texto plano.
-Debes ejecutar el reset (o el script Python set_passwords.py).
+IMPORTANTE:
+- Esta contraseña es únicamente para el entorno de prueba/demostración.
+- No utilizarla como contraseña de producción.
+- Los archivos .env son locales y NO deben subirse al repositorio.
 
 ------------------------------------------------
 A) ADMIN RRHH
@@ -24,8 +33,6 @@ Contraseña: Admin123!
 Nombre:     Claudia Cardenas Mejia
 Perfil:     ADMIN_RRHH (id_perfil = 1)
 Rol:        Administración / RRHH
-Uso:        Vista completa de gestión de empleados, nómina, contratos,
-            configuración, liquidaciones, PILA, etc.
 
 Alternativa Admin RRHH:
 Correo:     laura.munoz@construandes.com.co
@@ -39,278 +46,699 @@ Contraseña: Admin123!
 Nombre:     Ricardo Gil Gomez
 Perfil:     SUPERVISOR (id_perfil = 2)
 Rol:        Supervisor de obra
-Uso:        Gestión de asistencia, turnos, horas extra, observaciones,
-            evaluaciones, proyectos asignados a su cuadrilla.
 
 Alternativas Supervisor:
   - patricia.vargas@construandes.com.co
   - julian.ramirez@construandes.com.co
 
 ------------------------------------------------
-C) EMPLEADO PROMEDIO
+C) EMPLEADO
 ------------------------------------------------
 Correo:     martha.gomez@construandes.com.co
 Contraseña: Admin123!
 Nombre:     Martha Gomez Ortiz
 Perfil:     EMPLEADO (id_perfil = 4)
 Rol:        Empleado de obra / operativo
-Uso:        Vista limitada: consultar sus datos, desprendibles,
-            solicitudes, notificaciones, certificaciones propias.
 
-Otros empleados (todos con Admin123!):
+Otros empleados de prueba:
   - sergio.pena@construandes.com.co
   - cristian.suarez@construandes.com.co
   - andres.castro@construandes.com.co
   - carlos.sanchez@construandes.com.co
 
+Contraseña de los usuarios de prueba después del reset:
+  Admin123!
+
 --------------------------------------------------------------------------------
 2. REQUISITOS PREVIOS
 --------------------------------------------------------------------------------
 
-- PostgreSQL 14+ instalado y en ejecución
-- Python 3.10+ (recomendado 3.11 o 3.12)
-- Node.js 18+ (recomendado 20 LTS) y npm
-- Git (opcional)
-- Un editor o cliente SQL (DBeaver, pgAdmin, psql)
+Para ejecutar el proyecto desde cero se necesita:
 
-En Windows puedes usar:
-  - PostgreSQL oficial + pgAdmin
-  - Python desde python.org
-  - Node desde nodejs.org
+- Git
+- PostgreSQL 14 o superior
+- Python 3.10 o superior
+- Node.js 18 o superior
+- npm
+- DBeaver, pgAdmin o psql para ejecutar los scripts SQL
 
-En Linux/Mac:
-  sudo apt install postgresql postgresql-contrib   # Debian/Ubuntu
-  # o brew install postgresql
+Versiones utilizadas durante el desarrollo/reconstrucción actual:
 
---------------------------------------------------------------------------------
-3. PASO A PASO - BASE DE DATOS
---------------------------------------------------------------------------------
+- Python 3.14.3
+- Node.js 24.x
+- npm 11.x
+- PostgreSQL 18.x
 
-1. Crear la base de datos:
+Las versiones pueden variar entre equipos. Las dependencias exactas del backend
+se encuentran en:
 
-   psql -U postgres
-   CREATE DATABASE buydrax;
-   \q
+    backend/requirements.txt
 
-   (O desde pgAdmin / DBeaver: crear base "buydrax")
+y las dependencias del frontend se encuentran en:
 
-2. Conectarte a la base buydrax y ejecutar EN ORDEN:
-
-   a) BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
-      (crea tablas, tipos ENUM, datos de prueba y sincroniza secuencias)
-
-   b) SQL_RESET_PASSWORD_Admin123.sql
-      (pone la contraseña Admin123! a TODOS los usuarios)
-
-   Desde psql:
-   psql -U postgres -d buydrax -f BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
-   psql -U postgres -d buydrax -f SQL_RESET_PASSWORD_Admin123.sql
-
-   Desde DBeaver: abrir cada archivo y ejecutar (F5 / Execute SQL Script).
-
-3. Verificar usuarios (opcional):
-
-   SELECT id_usuario, correo, id_perfil, estado FROM usuarios ORDER BY id_usuario LIMIT 15;
-
-   id_perfil:
-     1 = ADMIN_RRHH
-     2 = SUPERVISOR
-     3 = CONTADOR
-     4 = EMPLEADO
+    frontend/package.json
 
 --------------------------------------------------------------------------------
-4. PASO A PASO - BACKEND (FastAPI)
+3. OBTENER EL PROYECTO
 --------------------------------------------------------------------------------
 
-1. Ir a la carpeta del backend:
+Si el proyecto todavía no está en el equipo:
 
-   cd buydrax_completo/backend
+    git clone https://github.com/YerikHerrera/Proyecto_Buydrax.git
+    cd Proyecto_Buydrax
 
-2. Crear y activar entorno virtual:
+La rama principal actual es:
 
-   # Windows
-   python -m venv .venv
-   .\.venv\Scripts\activate
+    master
 
-   # Linux / Mac
-   python3 -m venv .venv
-   source .venv/bin/activate
-
-3. Instalar dependencias:
-
-   pip install -r requirements.txt
-
-4. Configurar variables de entorno:
-
-   # Windows
-   copy .env.example .env
-
-   # Linux / Mac
-   cp .env.example .env
-
-   Editar el archivo .env con un editor de texto:
-
-   DATABASE_URL=postgresql+psycopg2://TU_USUARIO:TU_PASSWORD@localhost:5432/buydrax
-   SECRET_KEY=una-clave-secreta-larga-y-aleatoria-cambia-esto
-   ALGORITHM=HS256
-   ACCESS_TOKEN_EXPIRE_MINUTES=480
-   APP_NAME=Buydrax API
-   APP_ENV=development
-   DEBUG=true
-   API_PREFIX=/api/v1
-
-   Ejemplo típico (usuario postgres):
-   DATABASE_URL=postgresql+psycopg2://postgres:tu_password@localhost:5432/buydrax
-
-5. (Opcional) Resetear contraseñas desde Python en lugar del SQL:
-
-   python scripts/set_passwords.py --password Admin123! --apply
-
-6. Arrancar el servidor:
-
-   uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-
-7. Verificar:
-
-   - Health:  http://127.0.0.1:8000/health
-   - Docs:    http://127.0.0.1:8000/docs
-   - OpenAPI: http://127.0.0.1:8000/openapi.json
-
-   Deja esta terminal abierta mientras usas el sistema.
+La rama main se conserva como parte del historial anterior del proyecto.
 
 --------------------------------------------------------------------------------
-5. PASO A PASO - FRONTEND (React + Vite)
+4. PASO A PASO - BASE DE DATOS
 --------------------------------------------------------------------------------
 
-1. Abrir OTRA terminal e ir a la carpeta del frontend:
+IMPORTANTE:
 
-   cd buydrax_completo/frontend
+El archivo:
 
-2. Instalar dependencias:
+    BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
 
-   npm install
+NO contiene instrucciones CREATE DATABASE ni cambia de conexión
+automáticamente.
 
-3. (Recomendado) Crear archivo .env:
+Por eso, se debe disponer primero de una base PostgreSQL sobre la cual ejecutar
+los scripts.
 
-   # Windows (PowerShell)
-   echo VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1 > .env
+El entorno utilizado actualmente trabaja con:
 
-   # Linux / Mac
-   echo "VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1" > .env
+    Motor:      PostgreSQL
+    Host:       localhost
+    Puerto:     5432
+    Usuario:    postgres
+    Base:       postgres
 
-   Si no creas el .env, el frontend usa por defecto esa misma URL base
-   (revisa src/config/api.ts).
+También puedes utilizar otra base de datos. Si lo haces, deberás colocar ese
+nombre en DATABASE_URL dentro de backend/.env.
 
-4. Arrancar el servidor de desarrollo:
+------------------------------------------------
+4.1 Verificar PostgreSQL
+------------------------------------------------
 
-   npm run dev
+Asegúrate de que PostgreSQL esté instalado y ejecutándose.
 
-5. Abrir el navegador:
+En Windows puede comprobarse desde:
 
-   http://localhost:5173
+    Servicios de Windows
 
-   (Vite suele mostrar la URL exacta en la consola)
+buscando el servicio correspondiente a PostgreSQL.
+
+También se puede comprobar mediante DBeaver, pgAdmin o psql.
+
+------------------------------------------------
+4.2 Ejecutar los scripts SQL
+------------------------------------------------
+
+Los scripts deben ejecutarse EN ESTE ORDEN:
+
+    1. BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
+    2. SQL_RESET_PASSWORD_Admin123.sql
+
+El primer script crea la estructura y carga los datos correspondientes al
+proyecto.
+
+El segundo script establece la contraseña de prueba:
+
+    Admin123!
+
+para los usuarios existentes.
+
+------------------------------------------------
+4.3 Desde DBeaver
+------------------------------------------------
+
+1. Abrir DBeaver.
+2. Conectarse al PostgreSQL local.
+3. Seleccionar la base de datos que se utilizará para Buydrax.
+4. Abrir:
+
+       BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
+
+5. Ejecutar el script completo.
+6. Abrir:
+
+       SQL_RESET_PASSWORD_Admin123.sql
+
+7. Ejecutar el segundo script completo.
+
+------------------------------------------------
+4.4 Desde psql
+------------------------------------------------
+
+Si se utiliza la base de datos postgres:
+
+    psql -U postgres -d postgres -f BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
+    psql -U postgres -d postgres -f SQL_RESET_PASSWORD_Admin123.sql
+
+Si se utiliza otra base de datos, reemplazar "postgres" por el nombre
+correspondiente.
+
+------------------------------------------------
+4.5 Verificar usuarios
+------------------------------------------------
+
+Opcionalmente:
+
+    SELECT id_usuario, correo, id_perfil, estado
+    FROM usuarios
+    ORDER BY id_usuario
+    LIMIT 15;
+
+Los perfiles principales son:
+
+    1 = ADMIN_RRHH
+    2 = SUPERVISOR
+    3 = CONTADOR
+    4 = EMPLEADO
 
 --------------------------------------------------------------------------------
-6. ORDEN RECOMENDADO DE ARRANQUE
+5. PASO A PASO - BACKEND FASTAPI
 --------------------------------------------------------------------------------
 
-1. PostgreSQL en ejecución
-2. Backend  →  uvicorn ... --port 8000
-3. Frontend →  npm run dev
-4. Navegador → http://localhost:5173
-5. Login con uno de los 3 usuarios de la sección 1
+Abrir una terminal y entrar en:
+
+    cd Proyecto_Buydrax\backend
+
+En Linux/macOS:
+
+    cd Proyecto_Buydrax/backend
+
+------------------------------------------------
+5.1 Crear entorno virtual
+------------------------------------------------
+
+Windows PowerShell:
+
+    python -m venv .venv
+    .\.venv\Scripts\Activate.ps1
+
+Windows CMD:
+
+    python -m venv .venv
+    .venv\Scripts\activate
+
+Linux/macOS:
+
+    python3 -m venv .venv
+    source .venv/bin/activate
+
+------------------------------------------------
+5.2 Instalar dependencias
+------------------------------------------------
+
+Con el entorno virtual activado:
+
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+
+------------------------------------------------
+5.3 Crear el archivo .env
+------------------------------------------------
+
+El repositorio contiene:
+
+    backend/.env.example
+
+pero NO contiene un .env real.
+
+Cada equipo debe crear su propio .env.
+
+Windows PowerShell:
+
+    Copy-Item .env.example .env
+
+Linux/macOS:
+
+    cp .env.example .env
+
+Después editar:
+
+    backend/.env
+
+Ejemplo para el entorno actual:
+
+    DATABASE_URL=postgresql+psycopg2://postgres:TU_PASSWORD@localhost:5432/postgres
+    SECRET_KEY=GENERA_UNA_CLAVE_SECRETA_LARGA_Y_ALEATORIA
+    ALGORITHM=HS256
+    ACCESS_TOKEN_EXPIRE_MINUTES=480
+
+    APP_NAME=Buydrax API
+    APP_ENV=development
+    DEBUG=True
+    API_PREFIX=/api
+
+IMPORTANTE:
+
+- Reemplazar TU_PASSWORD por la contraseña local de PostgreSQL.
+- Generar una SECRET_KEY propia para cada entorno.
+- No copiar una SECRET_KEY real desde otro equipo.
+- No subir backend/.env a GitHub.
+- El archivo .env está excluido mediante .gitignore.
+
+Si se necesita generar una SECRET_KEY con Python:
+
+    python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+Copiar el resultado en:
+
+    SECRET_KEY=...
+
+------------------------------------------------
+5.4 Ejecutar el backend
+------------------------------------------------
+
+Desde:
+
+    Proyecto_Buydrax/backend
+
+con el entorno virtual activado:
+
+    uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+La API queda disponible en:
+
+    http://127.0.0.1:8000
+
+Documentación Swagger:
+
+    http://127.0.0.1:8000/docs
+
+Health check:
+
+    http://127.0.0.1:8000/health
+
+OpenAPI:
+
+    http://127.0.0.1:8000/openapi.json
+
+Dejar esta terminal abierta mientras se utiliza el sistema.
 
 --------------------------------------------------------------------------------
-7. CÓMO VER LAS DIFERENCIAS DE INTERFAZ POR ROL
+6. PASO A PASO - FRONTEND REACT + VITE
 --------------------------------------------------------------------------------
 
-1. Cierra sesión (Logout) si ya hay alguien logueado.
-2. Inicia sesión con:
-   - Admin RRHH  →  claudia.cardenas@construandes.com.co / Admin123!
-     Observa: menú lateral completo (empleados, nómina, configuración, etc.)
-3. Cierra sesión.
-4. Inicia sesión con:
-   - Supervisor  →  ricardo.gil@construandes.com.co / Admin123!
-     Observa: opciones orientadas a obra (asistencia, turnos, horas extra,
-     observaciones, proyectos de su cuadrilla).
-5. Cierra sesión.
-6. Inicia sesión con:
-   - Empleado    →  martha.gomez@construandes.com.co / Admin123!
-     Observa: vista restringida (perfil propio, desprendibles, solicitudes,
-     notificaciones).
+Abrir OTRA terminal.
 
-El Sidebar y las rutas protegidas cambian según el perfil del token JWT.
+Entrar en:
+
+    cd Proyecto_Buydrax\frontend
+
+En Linux/macOS:
+
+    cd Proyecto_Buydrax/frontend
+
+------------------------------------------------
+6.1 Instalar dependencias
+------------------------------------------------
+
+Ejecutar:
+
+    npm install
+
+No es necesario subir node_modules al repositorio.
+
+------------------------------------------------
+6.2 Configuración de conexión al backend
+------------------------------------------------
+
+El frontend contiene:
+
+    frontend/.env.example
+
+con:
+
+    VITE_API_BASE_URL=http://127.0.0.1:8000/api
+
+El prefijo actual del backend es:
+
+    /api
+
+NO utilizar:
+
+    /api/v1
+
+si se está trabajando con la configuración actual del proyecto.
+
+Si se desea crear un .env local:
+
+Windows PowerShell:
+
+    Copy-Item .env.example .env
+
+Linux/macOS:
+
+    cp .env.example .env
+
+El archivo frontend/.env también es local y no debe subirse a Git.
+
+------------------------------------------------
+6.3 Ejecutar el frontend
+------------------------------------------------
+
+Ejecutar:
+
+    npm run dev
+
+Vite mostrará la dirección local en la terminal.
+
+Normalmente:
+
+    http://localhost:5173
+
+Abrir esa dirección en el navegador.
 
 --------------------------------------------------------------------------------
-8. PROBLEMAS FRECUENTES Y SOLUCIONES
+7. ORDEN RECOMENDADO DE ARRANQUE
 --------------------------------------------------------------------------------
 
-• Error de conexión a PostgreSQL
-  - Verifica que el servicio esté corriendo.
-  - Revisa usuario/contraseña/puerto en DATABASE_URL.
-  - En Windows a veces hay que permitir conexiones locales en pg_hba.conf.
+Cada vez que se quiera ejecutar el sistema:
 
-• Login falla con "credenciales incorrectas"
-  - Asegúrate de haber ejecutado SQL_RESET_PASSWORD_Admin123.sql
-    DESPUÉS del script principal.
-  - Contraseña exacta: Admin123!  (con mayúscula A, números y !)
+    1. PostgreSQL
+    2. Backend FastAPI
+    3. Frontend React/Vite
+    4. Navegador
 
-• Frontend no conecta al backend (CORS / Network Error)
-  - Backend debe estar en http://127.0.0.1:8000
-  - Revisa que VITE_API_BASE_URL apunte a .../api/v1
-  - Abre http://127.0.0.1:8000/docs y prueba el endpoint /auth/login
+En detalle:
 
-• Puerto 8000 o 5173 ocupado
-  - Cambia el puerto del backend: --port 8001
-  - O del frontend: npm run dev -- --port 5174
-  - Actualiza VITE_API_BASE_URL si cambias el backend.
-
-• bcrypt / passlib errores al instalar
-  - Usa bcrypt==4.0.1 (ya está fijado en requirements.txt)
-  - En algunos entornos: pip install --upgrade pip
-
-• Secuencias SERIAL desincronizadas
-  - El script principal ya incluye setval al final.
-  - Si insertas datos manualmente, vuelve a ejecutar la sección de setval.
+    PostgreSQL
+        |
+        v
+    Backend
+    http://127.0.0.1:8000
+        |
+        v
+    Frontend
+    http://localhost:5173
+        |
+        v
+    Login
 
 --------------------------------------------------------------------------------
-9. ESTRUCTURA RÁPIDA DEL PROYECTO
+8. PRUEBA DE LOGIN
 --------------------------------------------------------------------------------
 
-buydrax_completo/
+Después de ejecutar ambos scripts SQL:
+
+    1. Abrir http://localhost:5173
+    2. Ingresar con un usuario de prueba.
+    3. Verificar que el sistema muestre la interfaz correspondiente al perfil.
+
+Prueba ADMIN_RRHH:
+
+    Correo:     claudia.cardenas@construandes.com.co
+    Contraseña: Admin123!
+
+Prueba SUPERVISOR:
+
+    Correo:     ricardo.gil@construandes.com.co
+    Contraseña: Admin123!
+
+Prueba EMPLEADO:
+
+    Correo:     martha.gomez@construandes.com.co
+    Contraseña: Admin123!
+
+--------------------------------------------------------------------------------
+9. DIFERENCIAS DE INTERFAZ POR PERFIL
+--------------------------------------------------------------------------------
+
+ADMIN_RRHH:
+
+    Permite acceder a funcionalidades de administración de recursos humanos,
+    empleados, nómina, contratos, configuración y otros procesos disponibles
+    para este perfil.
+
+SUPERVISOR:
+
+    Tiene acceso a funcionalidades relacionadas con la operación de obra,
+    asistencia, turnos, horas extra, observaciones, evaluaciones y proyectos
+    según los permisos correspondientes.
+
+EMPLEADO:
+
+    Cuenta con una vista restringida orientada a la consulta y gestión de su
+    propia información, incluyendo las funcionalidades disponibles para su
+    perfil.
+
+Para cambiar de usuario:
+
+    1. Cerrar sesión.
+    2. Ingresar con otro usuario de prueba.
+    3. Observar las opciones disponibles según el perfil.
+
+--------------------------------------------------------------------------------
+10. ESTRUCTURA ACTUAL DEL PROYECTO
+--------------------------------------------------------------------------------
+
+Proyecto_Buydrax/
+|
 ├── BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
 ├── SQL_RESET_PASSWORD_Admin123.sql
+├── BUYDRAX_USUARIOS_Y_GUIA_INSTALACION.txt
 ├── README.md
+|
 ├── backend/
 │   ├── app/
 │   │   ├── main.py
-│   │   ├── api/v1/endpoints/   (auth, domain, usuarios, roles)
-│   │   ├── core/               (config, security, dependencies)
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   └── services/
-│   ├── scripts/set_passwords.py
+│   │   ├── api/
+│   │   ├── base_datos/
+│   │   ├── modelos/
+│   │   ├── nucleo/
+│   │   ├── esquemas/
+│   │   └── servicios/
+│   ├── scripts/
 │   ├── requirements.txt
-│   └── .env.example
+│   ├── .env.example
+│   └── README.md
+|
 └── frontend/
+    ├── public/
     ├── src/
-    │   ├── components/layout/  (Sidebar, Navbar, AppShell)
-    │   ├── config/api.ts
-    │   └── ...
+    │   ├── components/
+    │   │   ├── proyectos/
+    │   │   ├── empleados/
+    │   │   ├── aprobaciones/
+    │   │   ├── operaciones/
+    │   │   ├── nomina/
+    │   │   ├── reportes/
+    │   │   ├── dashboard/
+    │   │   └── supervisor/
+    │   ├── pages/
+    │   ├── services/
+    │   └── config/
     ├── package.json
-    └── README_CONEXION.md
+    └── .env.example
 
 --------------------------------------------------------------------------------
-10. RESUMEN RÁPIDO DE CREDENCIALES
+11. PROBLEMAS FRECUENTES
 --------------------------------------------------------------------------------
 
-| Rol            | Correo                                  | Contraseña  |
-|----------------|-----------------------------------------|-------------|
-| Admin RRHH     | claudia.cardenas@construandes.com.co    | Admin123!   |
-| Supervisor     | ricardo.gil@construandes.com.co         | Admin123!   |
-| Empleado       | martha.gomez@construandes.com.co        | Admin123!   |
+------------------------------------------------
+11.1 Error de conexión a PostgreSQL
+------------------------------------------------
 
-¡Listo! Con esto puedes comparar las interfaces de cada perfil.
+Verificar:
 
-================================================================================
+    - PostgreSQL está ejecutándose.
+    - El usuario es correcto.
+    - La contraseña de PostgreSQL es correcta.
+    - El puerto es correcto.
+    - DATABASE_URL apunta a la base correcta.
+    - Los scripts SQL fueron ejecutados.
+    - Las tablas existen en la base seleccionada.
+
+La configuración de conexión se encuentra en:
+
+    backend/.env
+
+------------------------------------------------
+11.2 Login con credenciales incorrectas
+------------------------------------------------
+
+Verificar que:
+
+    SQL_RESET_PASSWORD_Admin123.sql
+
+se haya ejecutado DESPUÉS de:
+
+    BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
+
+Contraseña de prueba:
+
+    Admin123!
+
+------------------------------------------------
+11.3 Frontend no conecta con backend
+------------------------------------------------
+
+Primero comprobar:
+
+    http://127.0.0.1:8000/docs
+
+Si Swagger no abre, el backend no está ejecutándose correctamente.
+
+Después revisar:
+
+    frontend/.env
+
+Debe utilizar:
+
+    VITE_API_BASE_URL=http://127.0.0.1:8000/api
+
+El prefijo actual es:
+
+    /api
+
+no:
+
+    /api/v1
+
+------------------------------------------------
+11.4 Puerto 8000 ocupado
+------------------------------------------------
+
+Se puede utilizar otro puerto:
+
+    uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+
+Después cambiar:
+
+    VITE_API_BASE_URL=http://127.0.0.1:8001/api
+
+en la configuración del frontend.
+
+------------------------------------------------
+11.5 Puerto 5173 ocupado
+------------------------------------------------
+
+Ejecutar Vite en otro puerto:
+
+    npm run dev -- --port 5174
+
+------------------------------------------------
+11.6 Problemas con bcrypt / passlib
+------------------------------------------------
+
+Las versiones utilizadas por el proyecto están definidas en:
+
+    backend/requirements.txt
+
+Instalar las dependencias mediante:
+
+    pip install -r requirements.txt
+
+Si es necesario:
+
+    python -m pip install --upgrade pip
+
+--------------------------------------------------------------------------------
+12. VARIABLES DE ENTORNO Y SEGURIDAD
+--------------------------------------------------------------------------------
+
+El repositorio contiene archivos de ejemplo:
+
+    backend/.env.example
+    frontend/.env.example
+
+Los archivos reales:
+
+    backend/.env
+    frontend/.env
+
+son locales.
+
+NO deben subirse al repositorio.
+
+Nunca colocar en README, documentación o Git:
+
+    - Contraseñas reales de PostgreSQL
+    - SECRET_KEY real
+    - Tokens JWT
+    - Credenciales privadas
+    - Otros secretos del entorno
+
+Cada equipo debe configurar sus propias variables de entorno.
+
+--------------------------------------------------------------------------------
+13. COMPROBACIONES BÁSICAS
+--------------------------------------------------------------------------------
+
+Backend:
+
+    http://127.0.0.1:8000/health
+
+Si responde correctamente, el servidor está disponible.
+
+Swagger:
+
+    http://127.0.0.1:8000/docs
+
+Frontend:
+
+    http://localhost:5173
+
+Login:
+
+    Utilizar uno de los usuarios de prueba de la sección 1.
+
+Base de datos:
+
+    Verificar que existan las tablas creadas por
+    BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql.
+
+--------------------------------------------------------------------------------
+14. RESUMEN RÁPIDO
+--------------------------------------------------------------------------------
+
+1. Instalar PostgreSQL, Python y Node.js.
+2. Clonar el repositorio.
+3. Tener PostgreSQL ejecutándose.
+4. Ejecutar:
+
+       BASE_DE_DATOS_BUYDRAX_CORREGIDA.sql
+
+5. Ejecutar:
+
+       SQL_RESET_PASSWORD_Admin123.sql
+
+6. Entrar en backend.
+7. Crear .venv.
+8. Instalar requirements.txt.
+9. Crear backend/.env desde .env.example.
+10. Configurar DATABASE_URL y SECRET_KEY.
+11. Ejecutar:
+
+       uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+12. Abrir otra terminal.
+13. Entrar en frontend.
+14. Ejecutar:
+
+       npm install
+
+15. Configurar frontend/.env si se desea.
+16. Ejecutar:
+
+       npm run dev
+
+17. Abrir:
+
+       http://localhost:5173
+
+18. Iniciar sesión con:
+
+       claudia.cardenas@construandes.com.co
+       Admin123!
+
+--------------------------------------------------------------------------------
+FIN DE LA GUÍA
+--------------------------------------------------------------------------------

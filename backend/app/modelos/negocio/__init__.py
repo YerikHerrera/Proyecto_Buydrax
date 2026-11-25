@@ -7,6 +7,7 @@ from app.modelos.negocio.empleado_expediente import (
     Certificacion,
 )
 from app.modelos.negocio.proyecto_asignacion import Proyecto, AsignacionProyecto
+from app.modelos.negocio.cuadrilla import Cuadrilla, CuadrillaProyecto
 from app.modelos.negocio.asistencia_turno import Asistencia, Turno
 from app.modelos.negocio.novedad_hora_extra import Novedad, HoraExtra
 from app.modelos.negocio.contrato_beneficios import Contrato, Prestamo, Viatico

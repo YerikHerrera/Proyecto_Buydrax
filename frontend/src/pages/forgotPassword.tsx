@@ -28,22 +28,8 @@ export default function ForgotPassword() {
     setEstado("enviando");
 
     try {
-      // ─────────────────────────────────────────────────────────────
-      // TODO (backend): reemplazar esta simulación por la llamada real, ej:
-      //
-      // const res = await fetch("/api/auth/forgot-password", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ email }),
-      // });
-      // if (!res.ok) throw new Error("No se pudo procesar la solicitud");
-      //
-      // El backend debe: 1) verificar si el correo existe en la BD de usuarios,
-      // 2) generar un token de recuperación con expiración,
-      // 3) enviar el correo con el enlace (ej. /reset-password?token=...).
-      // ─────────────────────────────────────────────────────────────
-      await new Promise((resolve) => setTimeout(resolve, 1200)); // simula latencia de red
-
+      const { forgotPassword } = await import("../services/authService");
+      await forgotPassword(email.trim().toLowerCase());
       setEstado("enviado");
     } catch {
       setEstado("error");

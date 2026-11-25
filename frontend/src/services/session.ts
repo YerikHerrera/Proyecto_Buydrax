@@ -6,7 +6,7 @@ export type SesionUsuario = {
   rol: string | null;
 };
 
-export type RolOficial = "ADMIN_RRHH" | "SUPERVISOR" | "CONTADOR" | "EMPLEADO";
+export type RolOficial = "EMPRESA" | "ADMIN_RRHH" | "SUPERVISOR" | "CONTADOR" | "EMPLEADO";
 
 export function leerSesion(): SesionUsuario | null {
   try {
@@ -29,9 +29,19 @@ export function rolActual(): string {
   return (leerSesion()?.rol || "").toUpperCase().replace(/\s+/g, "_");
 }
 
+export function esEmpresa(): boolean {
+  const r = rolActual();
+  return r === "EMPRESA" || r === "PLATAFORMA" || r === "PLATFORM";
+}
+
 export function esAdminRrhh(): boolean {
   const r = rolActual();
   return r === "ADMIN_RRHH" || r === "ADMINISTRADOR" || r === "ADMIN" || r === "RRHH";
+}
+
+/** Admin de operación O administrador de plataforma (EMPRESA) */
+export function esAdminOEmpresa(): boolean {
+  return esAdminRrhh() || esEmpresa();
 }
 
 export function esSupervisor(): boolean {
@@ -53,7 +63,7 @@ export function esAdminOSupervisor(): boolean {
 
 /** Gestión pesada de personal solo ADMIN_RRHH */
 export function puedeGestionarPersonal(): boolean {
-  return esAdminRrhh();
+  return esAdminRrhh() || esEmpresa();
 }
 
 export function puedeAprobar(): boolean {
@@ -64,6 +74,10 @@ export function puedeAprobar(): boolean {
 export function etiquetaRol(rol?: string | null): string {
   const r = (rol || rolActual() || "").toUpperCase().replace(/\s+/g, "_");
   switch (r) {
+    case "EMPRESA":
+    case "PLATAFORMA":
+    case "PLATFORM":
+      return "EMPRESA";
     case "ADMIN_RRHH":
     case "ADMINISTRADOR":
     case "ADMIN":
@@ -94,8 +108,23 @@ export function menuPermitidoPorRol(): {
   nomina: boolean;
   reportes: boolean;
   usuarios: boolean;
+  empresas: boolean; // gestión de dominios (solo EMPRESA)
   portalEmpleado: boolean;
 } {
+  if (esEmpresa()) {
+    return {
+      inicio: true,
+      empleados: true,
+      empleadosGestion: true,
+      proyectos: true,
+      asistencia: true,
+      nomina: true,
+      reportes: true,
+      usuarios: true,
+      empresas: true,
+      portalEmpleado: false,
+    };
+  }
   if (esAdminRrhh()) {
     return {
       inicio: true,
@@ -106,6 +135,7 @@ export function menuPermitidoPorRol(): {
       nomina: true,
       reportes: true,
       usuarios: true,
+      empresas: false,
       portalEmpleado: false,
     };
   }
@@ -119,6 +149,7 @@ export function menuPermitidoPorRol(): {
       nomina: false, // consulta parcial vía reportes si aplica
       reportes: true,
       usuarios: false,
+      empresas: false,
       portalEmpleado: false,
     };
   }
@@ -132,6 +163,7 @@ export function menuPermitidoPorRol(): {
       nomina: true,
       reportes: true,
       usuarios: false,
+      empresas: false,
       portalEmpleado: false,
     };
   }
@@ -145,6 +177,7 @@ export function menuPermitidoPorRol(): {
     nomina: false,
     reportes: false,
     usuarios: false,
+    empresas: false,
     portalEmpleado: true,
   };
 }

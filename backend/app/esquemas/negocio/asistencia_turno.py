@@ -15,6 +15,7 @@ class AsistenciaCreate(BaseModel):
     hora_salida: Optional[time] = None
     estado_asistencia: str
     observacion: Optional[str] = None
+    id_proyecto: Optional[int] = None
 
 
 
@@ -28,6 +29,7 @@ class AsistenciaOut(ORM):
     estado_asistencia: str
     observacion: Optional[str] = None
     fecha_creacion: datetime
+    id_proyecto: Optional[int] = None
 
 
 # ---- Turno ----

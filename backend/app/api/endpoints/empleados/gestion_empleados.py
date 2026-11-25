@@ -15,6 +15,7 @@ from app.esquemas.negocio import (
     HistorialOut,
 )
 from app.servicios.servicio_empleados import ServicioEmpleados
+from app.nucleo.tenant import dominio_de_usuario
 
 router = APIRouter(tags=["Empleados"])
 
@@ -28,12 +29,13 @@ def listar_empleados(
     estado: Optional[str] = None,
     supervisor: Optional[int] = None,
     skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=1000),
 ):
     return ServicioEmpleados(db).listar(
         documento=documento,
         estado=estado,
         supervisor=supervisor,
+        dominio=dominio_de_usuario(actor),
         skip=skip,
         limit=limit,
     )
@@ -56,7 +58,7 @@ def actualizar_empleado(id_empleado: int, body: EmpleadoUpdate, db: DbSession, a
 
 @router.get("/empleados/export", summary="EP-14 Exportar empleados")
 def exportar_empleados(db: DbSession, actor: CurrentUser, formato: str = Query("json")):
-    result = ServicioEmpleados(db).exportar(formato)
+    result = ServicioEmpleados(db).exportar(formato, dominio=dominio_de_usuario(actor))
     if "csv" in result:
         return JSONResponse(content=result)
     return result

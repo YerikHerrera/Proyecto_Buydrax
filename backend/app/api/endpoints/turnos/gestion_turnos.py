@@ -11,9 +11,23 @@ router = APIRouter(tags=["Turnos"])
 def listar_turnos(db: DbSession, actor: CurrentUser):
     return ServicioTurnos(db).listar()
 
-@router.post("/turnos", response_model=TurnoOut, status_code=201, summary="EP-30 Registrar turno")
-def registrar_turno(body: TurnoCreate, db: DbSession, actor: AdminRrhhUser):
-    return ServicioTurnos(db).crear(body)
+
+@router.post(
+    "/turnos",
+    response_model=TurnoOut,
+    status_code=201,
+    summary="EP-30 Registrar turno",
+)
+def registrar_turno(
+    body: TurnoCreate,
+    db: DbSession,
+    actor: AdminRrhhUser,
+):
+    return ServicioTurnos(db).crear(
+        body,
+        id_asignado_por=actor.id_usuario,
+    )
+
 
 @router.get("/turnos/{id_turno}", response_model=TurnoOut, summary="EP-31 Consultar turno")
 def consultar_turno(id_turno: int, db: DbSession, actor: CurrentUser):
