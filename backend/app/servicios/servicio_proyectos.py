@@ -11,29 +11,16 @@ from app.repositorios.repositorio_proyectos import RepositorioProyectos
 from app.esquemas.negocio import ProyectoCreate, ProyectoUpdate
 
 
-def _es_supervisor(actor) -> bool:
-    return bool(actor and actor.perfil and actor.perfil.nombre == "SUPERVISOR")
-
-
 class ServicioProyectos:
     def __init__(self, db: Session):
         self.repo = RepositorioProyectos(db)
 
-    def listar(
-        self, *, estado: Optional[str] = None, dominio: Optional[str] = None, actor=None
-    ) -> Sequence[Proyecto]:
-        return self.repo.listar(
-            estado=estado,
-            dominio=dominio,
-            id_usuario_supervisor=actor.id_usuario if _es_supervisor(actor) else None,
-        )
+    def listar(self, *, estado: Optional[str] = None, dominio: Optional[str] = None) -> Sequence[Proyecto]:
+        return self.repo.listar(estado=estado, dominio=dominio)
 
-    def obtener(self, id_proyecto: int, actor=None) -> Proyecto:
+    def obtener(self, id_proyecto: int) -> Proyecto:
         p = self.repo.get_by_id(id_proyecto)
         if p is None:
-            raise NotFoundError("Proyecto no encontrado")
-        if _es_supervisor(actor) and not self.repo.es_del_supervisor(p, actor.id_usuario):
-            # Mismo mensaje que si no existiera, para no revelar proyectos ajenos
             raise NotFoundError("Proyecto no encontrado")
         return p
 

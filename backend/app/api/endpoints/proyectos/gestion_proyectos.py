@@ -14,9 +14,7 @@ router = APIRouter(tags=["Proyectos"])
 
 @router.get("/proyectos", response_model=list[ProyectoOut], summary="EP-42 Listar proyectos")
 def listar_proyectos(db: DbSession, actor: CurrentUser, estado: Optional[str] = None):
-    return ServicioProyectos(db).listar(
-        estado=estado, dominio=dominio_de_usuario(actor), actor=actor
-    )
+    return ServicioProyectos(db).listar(estado=estado, dominio=dominio_de_usuario(actor))
 
 
 @router.post("/proyectos", response_model=ProyectoOut, status_code=201, summary="EP-43 Crear proyecto")
@@ -26,7 +24,7 @@ def crear_proyecto(body: ProyectoCreate, db: DbSession, actor: AdminRrhhUser):
 
 @router.get("/proyectos/{id_proyecto}", response_model=ProyectoOut, summary="EP-44 Consultar proyecto")
 def consultar_proyecto(id_proyecto: int, db: DbSession, actor: CurrentUser):
-    return ServicioProyectos(db).obtener(id_proyecto, actor=actor)
+    return ServicioProyectos(db).obtener(id_proyecto)
 
 
 @router.patch("/proyectos/{id_proyecto}", response_model=ProyectoOut, summary="EP-45 Actualizar proyecto")

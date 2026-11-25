@@ -13,6 +13,7 @@ engine = create_engine(
     settings.database_url,
     pool_pre_ping=True,
     future=True,
+    connect_args={"options": "-c client_encoding=WIN1252"},
 )
 
 SessionLocal = sessionmaker(

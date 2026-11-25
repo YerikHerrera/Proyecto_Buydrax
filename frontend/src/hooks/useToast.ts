@@ -7,9 +7,8 @@ export function useToast() {
 
   const showToast = useCallback((message: string, type: ToastType = "error") => {
     setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
   }, []);
 
-  const closeToast = useCallback(() => setToast(null), []);
-
-  return { toast, showToast, closeToast };
+  return { toast, showToast };
 }

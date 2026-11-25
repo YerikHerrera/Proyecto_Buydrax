@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { nombreUsuario, type UsuarioPublic } from "../../services/usuariosService";
-import { CIUDADES_CO, BARRIOS_BOGOTA, SALARIOS_SUGERIDOS } from "../../data/ubicacionesColombia";
 
 const CARGOS = [
   "Administrador de RRHH",
@@ -248,56 +247,22 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
 
       <div>
         <label className="agregar-label">Barrio</label>
-        <select
+        <input
           className="agregar-input"
-          value={BARRIOS_BOGOTA.includes(barrio as any) ? barrio : barrio ? "Otro" : ""}
-          onChange={(e) => {
-            if (e.target.value === "Otro") setBarrio("");
-            else setBarrio(e.target.value);
-          }}
-        >
-          <option value="">Seleccionar…</option>
-          {BARRIOS_BOGOTA.map((b) => (
-            <option key={b} value={b}>{b}</option>
-          ))}
-        </select>
-        {(!BARRIOS_BOGOTA.includes(barrio as any) || barrio === "") && (
-          <input
-            className="agregar-input"
-            style={{ marginTop: 8 }}
-            placeholder="Escribe el barrio"
-            value={barrio}
-            maxLength={80}
-            onChange={(e) => setBarrio(e.target.value.slice(0, 80))}
-          />
-        )}
+          value={barrio}
+          onChange={(e) => setBarrio(e.target.value.slice(0, 80))}
+          maxLength={80} 
+        />
       </div>
 
       <div>
         <label className="agregar-label">Ciudad *</label>
-        <select
+        <input
           className="agregar-input"
-          value={CIUDADES_CO.includes(ciudad as any) ? ciudad : ciudad ? "Otro" : ""}
-          onChange={(e) => {
-            if (e.target.value === "Otro") setCiudad("");
-            else setCiudad(e.target.value);
-          }}
-        >
-          <option value="">Seleccionar…</option>
-          {CIUDADES_CO.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        {(!CIUDADES_CO.includes(ciudad as any) || ciudad === "") && (
-          <input
-            className="agregar-input"
-            style={{ marginTop: 8 }}
-            placeholder="Escribe la ciudad"
-            value={ciudad}
-            maxLength={80}
-            onChange={(e) => setCiudad(e.target.value.slice(0, 80))}
-          />
-        )}
+          value={ciudad}
+          onChange={(e) => setCiudad(e.target.value.slice(0, 80))}
+          maxLength={80} 
+        />
       </div>
 
       <div>
@@ -330,32 +295,19 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
       </div>
 
       <div>
-        <label className="agregar-label">Salario * (COP)</label>
-        <select
-          className="agregar-input"
-          value={SALARIOS_SUGERIDOS.includes(salario as any) ? salario : salario ? "__custom" : ""}
-          onChange={(e) => {
-            if (e.target.value === "__custom") return;
-            setSalario(e.target.value);
-          }}
-        >
-          <option value="">Sugeridos…</option>
-          {SALARIOS_SUGERIDOS.map((s) => (
-            <option key={s} value={s}>
-              {Number(s).toLocaleString("es-CO")}
-            </option>
-          ))}
-          <option value="__custom">Otro monto…</option>
-        </select>
+        <label className="agregar-label">Salario *</label>
         <input
           className="agregar-input"
-          style={{ marginTop: 8 }}
-          type="text"
-          inputMode="decimal"
-          placeholder="Monto exacto"
+          type="number"
+          min="0"
+          step="0.01"
           value={salario}
-          maxLength={12}
           onChange={(e) => setSalario(e.target.value.replace(/[^0-9.]/g, "").slice(0, 12))}
+          maxLength={12}
+          inputMode="decimal"
+          min={0}
+          type="text"
+          placeholder="Solo números" 
         />
       </div>
 

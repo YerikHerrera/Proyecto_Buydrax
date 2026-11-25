@@ -1,72 +1,64 @@
+"""Esquemas de negocio."""
 
-"""Esquemas de negocio: Novedad y HoraExtra."""
+from datetime import date, datetime, time
+from decimal import Decimal
+from typing import Any, Optional
 
-from datetime import date
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.esquemas.comunes import ORMModel as ORM
 
 
 class NovedadCreate(BaseModel):
     tipo_novedad: str
     fecha_inicio: date
     fecha_fin: date
-    total_dias: float
-    soporte_url: str | None = None
+    total_dias: float = Field(..., gt=0)
+    soporte_url: Optional[str] = None
+
 
 
 class NovedadUpdate(BaseModel):
-    tipo_novedad: str | None = None
-    fecha_inicio: date | None = None
-    fecha_fin: date | None = None
-    total_dias: float | None = None
-    soporte_url: str | None = None
-    estado_novedad: str | None = None
-    id_aprobado_por: int | None = None
+    estado_novedad: Optional[str] = None
+    soporte_url: Optional[str] = None
+    total_dias: Optional[float] = None
 
 
-class NovedadOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
 
+class NovedadOut(ORM):
     id_novedad: int
     id_empleado: int
-    id_aprobado_por: int | None
+    id_aprobado_por: Optional[int] = None
     tipo_novedad: str
     fecha_inicio: date
     fecha_fin: date
     total_dias: float
-    soporte_url: str | None
+    soporte_url: Optional[str] = None
     estado_novedad: str
 
 
-# ==========================================
-# ESQUEMAS DE HORAS EXTRA
-# ==========================================
+# ---- Hora extra ----
 
 class HoraExtraCreate(BaseModel):
     motivo: str
     fecha_inicio: date
     fecha_fin: date
-    cantidad_horas: float
+    cantidad_horas: float = Field(..., gt=0)
     tipo_hora: str
     archivo_soporte_url: str
 
 
+
 class HoraExtraUpdate(BaseModel):
-    motivo: str | None = None
-    fecha_inicio: date | None = None
-    fecha_fin: date | None = None
-    cantidad_horas: float | None = None
-    tipo_hora: str | None = None
-    archivo_soporte_url: str | None = None
-    estado_he: str | None = None
-    id_aprobador: int | None = None
+    estado_he: Optional[str] = None
+    motivo: Optional[str] = None
 
 
-class HoraExtraOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
 
+class HoraExtraOut(ORM):
     id_hora_extra: int
     id_empleado: int
-    id_aprobador: int | None
+    id_aprobador: Optional[int] = None
     motivo: str
     fecha_inicio: date
     fecha_fin: date
@@ -74,3 +66,6 @@ class HoraExtraOut(BaseModel):
     tipo_hora: str
     archivo_soporte_url: str
     estado_he: str
+
+
+# ---- Certificación ----

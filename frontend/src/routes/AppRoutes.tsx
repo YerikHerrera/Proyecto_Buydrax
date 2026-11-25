@@ -34,7 +34,6 @@ import ExportarPersonal from "../pages/reportes/ExportarPersonal";
 import PortalEmpleado from "../pages/PortalEmpleado";
 import Pila from "../pages/Pila";
 import EmpresasDominios from "../pages/EmpresasDominios";
-import Soporte from "../pages/Soporte";
 
 function AppRoutes() {
   return (
@@ -44,7 +43,6 @@ function AppRoutes() {
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/soporte" element={<Soporte />} />
 
         {/* Dashboard / plataforma */}
         <Route

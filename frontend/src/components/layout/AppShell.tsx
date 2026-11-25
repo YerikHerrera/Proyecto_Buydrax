@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import { SidebarProvider } from "./SidebarContext";
 
 type Props = {
   children: ReactNode;
@@ -15,16 +14,14 @@ type Props = {
  */
 export default function AppShell({ children, mainClassName = "" }: Props) {
   return (
-    <SidebarProvider>
-      <div className="app-shell">
-        <Navbar />
-        <div className="app-shell__body">
-          <Sidebar />
-          <main className={`app-shell__main ${mainClassName}`.trim()}>
-            {children}
-          </main>
-        </div>
+    <div className="app-shell">
+      <Navbar />
+      <div className="app-shell__body">
+        <Sidebar />
+        <main className={`app-shell__main ${mainClassName}`.trim()}>
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }

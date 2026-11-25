@@ -32,8 +32,6 @@ type Props = {
   loading: boolean;
   saving: boolean;
   onGuardar: () => void;
-  archivoExcusa?: File | null;
-  setArchivoExcusa?: (f: File | null) => void;
 };
 
 function nombreEmp(
@@ -87,177 +85,146 @@ export default function AsistenciaForm(p: Props) {
   }, [p.empleados, p.usuariosMap, busqueda]);
 
   return (
-    <div className="asistencia-form" style={{ marginTop: 16, maxWidth: 720 }}>
+    <div className="asistencia-form" style={{ marginTop: 16, maxWidth: 560 }}>
       {p.errorMsg && (
         <p style={{ color: "#b00020", marginBottom: 12 }}>{p.errorMsg}</p>
       )}
 
-      {/* Dos columnas; en pantallas angostas pasa a una */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px 20px", alignItems: "start" }}>
-        <div>
-          <label className="agregar-label">Buscar empleado</label>
-          <div className="emp-search">
-            <span className="emp-search-icon" aria-hidden>
-              🔍
-            </span>
-            <input
-              className="agregar-input"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Nombre, documento o cargo"
-              autoComplete="off"
-            />
-            {busqueda && (
-              <button
-                type="button"
-                className="emp-search-clear"
-                onClick={() => setBusqueda("")}
-                aria-label="Limpiar"
-              >
-                ×
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <label className="agregar-label">Empleado *</label>
-          <select
-            className="agregar-input"
-            value={p.empleadoId}
-            onChange={(e) => p.setEmpleadoId(e.target.value)}
-            disabled={p.loading}
+      <label className="agregar-label">Buscar empleado</label>
+      <div className="emp-search" style={{ marginBottom: 12 }}>
+        <span className="emp-search-icon" aria-hidden>
+          🔍
+        </span>
+        <input
+          className="agregar-input"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Nombre, documento o cargo"
+          autoComplete="off"
+        />
+        {busqueda && (
+          <button
+            type="button"
+            className="emp-search-clear"
+            onClick={() => setBusqueda("")}
+            aria-label="Limpiar"
           >
-            <option value="">Seleccione…</option>
-            {empleadosFiltrados.map((e) => (
-              <option key={e.id_empleado} value={e.id_empleado}>
-                {nombreEmp(e, p.usuariosMap)} — {e.cargo || "Sin cargo"} ·{" "}
-                {e.numero_documento || "s/doc"}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="agregar-label">Proyecto *</label>
-          <select
-            className="agregar-input"
-            value={p.idProyecto}
-            onChange={(e) => p.setIdProyecto(e.target.value)}
-            disabled={!p.empleadoId || proyectosEmpleado.length === 0}
-          >
-            <option value="">
-              {!p.empleadoId
-                ? "Primero elige empleado"
-                : proyectosEmpleado.length === 0
-                  ? "Sin asignación activa — asígnalo a un proyecto"
-                  : "Seleccione proyecto…"}
-            </option>
-            {proyectosEmpleado.map((a) => (
-              <option key={a.id_asignacion} value={a.id_proyecto}>
-                {p.proyectosMap[a.id_proyecto]?.nombre || `Proyecto #${a.id_proyecto}`}
-                {a.cuadrilla ? ` · ${a.cuadrilla}` : ""}
-              </option>
-            ))}
-          </select>
-          <small className="field-hint">
-            Solo proyectos donde el empleado tiene asignación activa.
-          </small>
-        </div>
-
-        <div>
-          <label className="agregar-label">Tipo de registro *</label>
-          <select
-            className="agregar-input"
-            value={p.estado}
-            onChange={(e) => p.setEstado(e.target.value)}
-          >
-            {ESTADOS_MANUALES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-          {!esManualSinHoras && (
-            <small className="field-hint">
-              Estado calculado:{" "}
-              <strong>{p.estadoCalculado || "PRESENTE"}</strong> (según hora de
-              llegada vs turno o 08:00)
-            </small>
-          )}
-        </div>
-
-        {esExcusa && p.setArchivoExcusa && (
-          <div>
-            <label className="agregar-label">Adjuntar soporte (PDF/JPG/PNG)</label>
-            <input
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf"
-              className="agregar-input"
-              onChange={(e) => {
-                const f = e.target.files?.[0] || null;
-                if (f && f.size > 5 * 1024 * 1024) {
-                  alert("El archivo no debe superar 5 MB");
-                  e.target.value = "";
-                  p.setArchivoExcusa?.(null);
-                  return;
-                }
-                p.setArchivoExcusa?.(f);
-              }}
-            />
-            <small className="field-hint">
-              Opcional. Se registra el nombre del archivo en la observación de la asistencia.
-              {p.archivoExcusa ? ` · Seleccionado: ${p.archivoExcusa.name}` : ""}
-            </small>
-          </div>
-        )}
-
-        <div>
-          <label className="agregar-label">Fecha *</label>
-          <input
-            className="agregar-input"
-            type="date"
-            value={p.fecha}
-            max={hoy}
-            disabled={!esExcusa}
-            onChange={(e) => p.setFecha(e.target.value)}
-          />
-          <small className="field-hint">
-            {esExcusa
-              ? "Excusa: puedes elegir fecha pasada (no futura)."
-              : "Fecha fija = hoy (solo Excusa permite cambiarla)."}
-          </small>
-        </div>
-
-        {!esManualSinHoras && (
-          <>
-            <div>
-                  <label className="agregar-label">Hora entrada *</label>
-                  <input
-                    className="agregar-input"
-                    type="time"
-                    value={p.horaEntrada}
-                    readOnly
-                    disabled
-                  />
-                  <small className="field-hint">
-                    Bloqueada en la hora actual (Presente/Retardo automático).
-                  </small>
-            </div>
-            <div>
-                  <label className="agregar-label">Hora salida (opcional)</label>
-                  <input
-                    className="agregar-input"
-                    type="time"
-                    value={p.horaSalida}
-                    onChange={(e) => p.setHoraSalida(e.target.value)}
-                  />
-            </div>
-          </>
+            ×
+          </button>
         )}
       </div>
 
-      <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end" }}>
+      <label className="agregar-label">Empleado *</label>
+      <select
+        className="agregar-input"
+        value={p.empleadoId}
+        onChange={(e) => p.setEmpleadoId(e.target.value)}
+        disabled={p.loading}
+      >
+        <option value="">Seleccione…</option>
+        {empleadosFiltrados.map((e) => (
+          <option key={e.id_empleado} value={e.id_empleado}>
+            {nombreEmp(e, p.usuariosMap)} — {e.cargo || "Sin cargo"} ·{" "}
+            {e.numero_documento || "s/doc"}
+          </option>
+        ))}
+      </select>
+
+      <label className="agregar-label" style={{ marginTop: 12 }}>
+        Proyecto *
+      </label>
+      <select
+        className="agregar-input"
+        value={p.idProyecto}
+        onChange={(e) => p.setIdProyecto(e.target.value)}
+        disabled={!p.empleadoId || proyectosEmpleado.length === 0}
+      >
+        <option value="">
+          {!p.empleadoId
+            ? "Primero elige empleado"
+            : proyectosEmpleado.length === 0
+              ? "Sin asignación activa — asígnalo a un proyecto"
+              : "Seleccione proyecto…"}
+        </option>
+        {proyectosEmpleado.map((a) => (
+          <option key={a.id_asignacion} value={a.id_proyecto}>
+            {p.proyectosMap[a.id_proyecto]?.nombre || `Proyecto #${a.id_proyecto}`}
+            {a.cuadrilla ? ` · ${a.cuadrilla}` : ""}
+          </option>
+        ))}
+      </select>
+      <small className="field-hint">
+        Solo proyectos donde el empleado tiene asignación activa.
+      </small>
+
+      <label className="agregar-label" style={{ marginTop: 12 }}>
+        Tipo de registro *
+      </label>
+      <select
+        className="agregar-input"
+        value={p.estado}
+        onChange={(e) => p.setEstado(e.target.value)}
+      >
+        {ESTADOS_MANUALES.map((s) => (
+          <option key={s.value} value={s.value}>
+            {s.label}
+          </option>
+        ))}
+      </select>
+      {!esManualSinHoras && (
+        <small className="field-hint">
+          Estado calculado:{" "}
+          <strong>{p.estadoCalculado || "PRESENTE"}</strong> (según hora de
+          llegada vs turno o 08:00)
+        </small>
+      )}
+
+      <label className="agregar-label" style={{ marginTop: 12 }}>
+        Fecha *
+      </label>
+      <input
+        className="agregar-input"
+        type="date"
+        value={p.fecha}
+        max={hoy}
+        disabled={!esExcusa}
+        onChange={(e) => p.setFecha(e.target.value)}
+      />
+      <small className="field-hint">
+        {esExcusa
+          ? "Excusa: puedes elegir fecha pasada (no futura)."
+          : "Fecha fija = hoy (solo Excusa permite cambiarla)."}
+      </small>
+
+      {!esManualSinHoras && (
+        <>
+          <label className="agregar-label" style={{ marginTop: 12 }}>
+            Hora entrada *
+          </label>
+          <input
+            className="agregar-input"
+            type="time"
+            value={p.horaEntrada}
+            readOnly
+            disabled
+          />
+          <small className="field-hint">
+            Bloqueada en la hora actual (Presente/Retardo automático).
+          </small>
+
+          <label className="agregar-label" style={{ marginTop: 12 }}>
+            Hora salida (opcional)
+          </label>
+          <input
+            className="agregar-input"
+            type="time"
+            value={p.horaSalida}
+            onChange={(e) => p.setHoraSalida(e.target.value)}
+          />
+        </>
+      )}
+
+      <div style={{ marginTop: 20 }}>
         <button
           type="button"
           className="agregar-btn-primario"

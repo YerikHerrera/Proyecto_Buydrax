@@ -1,169 +1,253 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
-import TurnoForm from "../components/operaciones/TurnoForm";
-import { listarEmpleados, type Empleado } from "../services/empleadosService";
-import { listarUsuarios, type UsuarioPublic } from "../services/usuariosService";
-import { listarProyectos, type Proyecto } from "../services/proyectosService";
+import AsistenciaForm from "../components/operaciones/AsistenciaForm";
 import { listarAsignaciones, type AsignacionOut } from "../services/asignacionesService";
+import { listarEmpleados, type Empleado } from "../services/empleadosService";
+import { listarProyectos, type Proyecto } from "../services/proyectosService";
+import { listarUsuarios, type UsuarioPublic } from "../services/usuariosService";
 import { apiRequest } from "../services/apiClient";
-import "../styles/Turnos.css";
+import "../styles/asistencia.css";
 
-/** Proyecto mínimo para el select aunque no venga en el listado (ej. no ACTIVO). */
-function stubProyecto(id: number): Proyecto {
-  return {
-    id_proyecto: id,
-    id_supervisor: 0,
-    nombre: `Proyecto #${id}`,
-    ubicacion_calle: "",
-    fecha_inicio: "",
-    fecha_fin: "",
-    estado_proyecto: "DESCONOCIDO",
-  };
+function hoyISO() {
+  return new Date().toISOString().slice(0, 10);
 }
 
-export default function Turnos() {
+function ahoraHHMM() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+export default function Asistencia() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [usuariosMap, setUsuariosMap] = useState<Record<number, UsuarioPublic>>({});
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [asignaciones, setAsignaciones] = useState<AsignacionOut[]>([]);
   const [empleadoId, setEmpleadoId] = useState("");
-  const [proyectoId, setProyectoId] = useState("");
-  const [tipoTurno, setTipoTurno] = useState("Diurno");
-  const [fecha, setFecha] = useState("");
-  const [horaInicio, setHoraInicio] = useState("07:00");
-  const [horaFin, setHoraFin] = useState("17:00");
-  const [error, setError] = useState("");
-  const [ok, setOk] = useState("");
+  const [idProyecto, setIdProyecto] = useState("");
+  const [fecha, setFecha] = useState(hoyISO());
+  const [horaEntrada, setHoraEntrada] = useState(ahoraHHMM());
+  const [horaSalida, setHoraSalida] = useState("");
+  const [estado, setEstado] = useState("AUTO");
+  const [archivoExcusa, setArchivoExcusa] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState("");
 
-  const reloadAsignaciones = useCallback(() => {
-    return listarAsignaciones()
-      .then((a) => setAsignaciones(Array.isArray(a) ? a : []))
-      .catch(() => {});
+  useEffect(() => {
+    Promise.all([
+      listarEmpleados({ estado: "ACTIVO" }),
+      listarUsuarios({ limit: 200 }),
+      listarProyectos().catch(() => [] as Proyecto[]),
+      listarAsignaciones().catch(() => [] as AsignacionOut[]),
+    ])
+      .then(([d, users, proys, asigs]) => {
+        setEmpleados(Array.isArray(d) ? d : []);
+        const map: Record<number, UsuarioPublic> = {};
+        for (const u of users || []) map[u.id_usuario] = u;
+        setUsuariosMap(map);
+        setProyectos(Array.isArray(proys) ? proys : []);
+        setAsignaciones(Array.isArray(asigs) ? asigs : []);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const reloadProyectos = useCallback(() => {
-    // Sin filtro de estado: hace falta el nombre aunque el proyecto no esté ACTIVO
-    return listarProyectos()
-      .then((p) => setProyectos(Array.isArray(p) ? p : []))
-      .catch(() => {});
-  }, []);
-
-  const cargarTodo = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [e, p, users, asigs] = await Promise.all([
-        listarEmpleados({ estado: "ACTIVO" }),
-        listarProyectos().catch(() => [] as Proyecto[]),
-        listarUsuarios({ limit: 200 }).catch(() => [] as UsuarioPublic[]),
-        listarAsignaciones().catch(() => [] as AsignacionOut[]),
-      ]);
-      setEmpleados(Array.isArray(e) ? e : []);
-      setProyectos(Array.isArray(p) ? p : []);
-      const map: Record<number, UsuarioPublic> = {};
-      for (const u of users || []) map[u.id_usuario] = u;
-      setUsuariosMap(map);
-      setAsignaciones(Array.isArray(asigs) ? asigs : []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (estado !== "EXCUSA") {
+      setArchivoExcusa(null);
     }
-  }, []);
+  }, [estado]);
 
-  useEffect(() => {
-    void cargarTodo();
-  }, [cargarTodo]);
+  const proyectosMap = useMemo(() => {
+    const m: Record<number, Proyecto> = {};
+    proyectos.forEach((p) => (m[p.id_proyecto] = p));
+    return m;
+  }, [proyectos]);
 
-  // Al volver a la pestaña / ventana: refrescar asignaciones y proyectos
-  useEffect(() => {
-    const onFocus = () => {
-      void reloadAsignaciones();
-      void reloadProyectos();
-    };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") onFocus();
+  const nombreEmpleadoSeleccionado = useMemo(() => {
+    if (!empleadoId) return "";
+    const emp = empleados.find((e) => String(e.id_empleado) === String(empleadoId));
+    if (!emp) return `Empleado #${empleadoId}`;
+    const usr = emp.id_usuario ? usuariosMap[emp.id_usuario] : undefined;
+    const usrRec = usr as unknown as Record<string, unknown> | undefined;
+    const nombre =
+      [usr?.nombres, usr?.apellidos].filter(Boolean).join(" ").trim() ||
+      String(usrRec?.nombre_completo ?? "") ||
+      String(usrRec?.nombre ?? "") ||
+      `Empleado #${emp.id_empleado}`;
+    return emp.cargo ? `${nombre} (${emp.cargo})` : nombre;
+  }, [empleadoId, empleados, usuariosMap]);
+
+  const nombreProyectoSeleccionado = useMemo(() => {
+    if (!idProyecto) return "";
+    return proyectosMap[Number(idProyecto)]?.nombre || `Proyecto #${idProyecto}`;
+  }, [idProyecto, proyectosMap]);
+
+  /** Valida que la fecha esté dentro del rango de al menos un proyecto activo del empleado. */
+  const validarFechaEnProyectos = (idEmp: string, fechaStr: string): string | null => {
+    const activas = asignaciones.filter(
+      (a) => a.activo !== false && String(a.id_empleado) === String(idEmp)
+    );
+    if (activas.length === 0) {
+      return null;
+    }
+    const okEnAlguno = activas.some((a) => {
+      const p = proyectosMap[a.id_proyecto];
+      if (!p) return false;
+      const ini = String(p.fecha_inicio || "").slice(0, 10);
+      const fin = String(p.fecha_fin || "").slice(0, 10);
+      if (ini && fechaStr < ini) return false;
+      if (fin && fechaStr > fin) return false;
+      return true;
     });
-    return () => {
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [reloadAsignaciones, reloadProyectos]);
-
-  // Al cambiar de empleado: refrescar asignaciones por si se acabó de asignar
-  useEffect(() => {
-    if (empleadoId) void reloadAsignaciones();
-  }, [empleadoId, reloadAsignaciones]);
-
-  const activas = useMemo(
-    () => asignaciones.filter((a) => a.activo !== false),
-    [asignaciones]
-  );
-
-  const proyectosDelEmpleado = useMemo(() => {
-    if (!empleadoId) return [];
-    const ids = [
-      ...new Set(
-        activas
-          .filter((a) => String(a.id_empleado) === String(empleadoId))
-          .map((a) => a.id_proyecto)
-      ),
-    ];
-    const byId = new Map(proyectos.map((p) => [p.id_proyecto, p]));
-    // Incluir TODOS los id de asignación activa, aunque el proyecto no esté en el listado
-    return ids.map((id) => byId.get(id) || stubProyecto(id));
-  }, [empleadoId, proyectos, activas]);
-
-  const sinAsignacion =
-    Boolean(empleadoId) && !loading && proyectosDelEmpleado.length === 0;
-
-  useEffect(() => {
-    if (
-      proyectoId &&
-      empleadoId &&
-      !proyectosDelEmpleado.some((p) => String(p.id_proyecto) === String(proyectoId))
-    ) {
-      setProyectoId("");
+    if (!okEnAlguno) {
+      const rangos = activas
+        .map((a) => {
+          const p = proyectosMap[a.id_proyecto];
+          if (!p) return null;
+          return `${p.nombre}: ${String(p.fecha_inicio).slice(0, 10)} → ${String(p.fecha_fin).slice(0, 10)}`;
+        })
+        .filter(Boolean)
+        .join("; ");
+      return (
+        "No se puede registrar asistencia fuera de las fechas del proyecto. " +
+        (rangos ? `Rangos: ${rangos}` : "Revisa inicio/fin de la obra.")
+      );
     }
-  }, [empleadoId, proyectoId, proyectosDelEmpleado]);
+    return null;
+  };
 
-  useEffect(() => {
-    if (empleadoId && proyectosDelEmpleado.length === 1) {
-      setProyectoId(String(proyectosDelEmpleado[0].id_proyecto));
-    }
-  }, [empleadoId, proyectosDelEmpleado]);
+  const estadoCalculado = useMemo(() => {
+    if (estado === "INASISTENCIA" || estado === "EXCUSA") return estado;
+    const he = horaEntrada.length >= 5 ? horaEntrada.slice(0, 5) : horaEntrada;
+    const [hh, mm] = (he || "08:00").split(":").map(Number);
+    const mins = (hh || 0) * 60 + (mm || 0);
+    const limite = 8 * 60;
+    return mins > limite ? "RETARDO" : "PRESENTE";
+  }, [estado, horaEntrada]);
 
   const guardar = async () => {
-    if (!empleadoId || !proyectoId || !fecha) {
-      setError("Completa empleado, proyecto y fecha.");
+    setError("");
+    setOk("");
+
+    if (!empleadoId) {
+      setError("Selecciona un empleado.");
       return;
     }
-    if (sinAsignacion) {
-      setError("El empleado no tiene asignación activa. Asígnalo a un proyecto primero.");
+    const hoy = hoyISO();
+    const esExcusa = estado === "EXCUSA";
+    const esInasistencia = estado === "INASISTENCIA";
+    const sinHoras = esExcusa || esInasistencia;
+
+    if (!fecha) {
+      setError("La fecha es obligatoria.");
       return;
     }
+    if (fecha > hoy) {
+      setError("No se permiten fechas futuras.");
+      return;
+    }
+    if (!esExcusa && fecha !== hoy) {
+      setError("Solo con Excusa se puede usar una fecha distinta de hoy.");
+      return;
+    }
+    if (!sinHoras && !horaEntrada) {
+      setError("Falta la hora de entrada.");
+      return;
+    }
+    if (horaSalida && horaEntrada && horaSalida < horaEntrada) {
+      setError("La hora de salida no puede ser anterior a la de entrada.");
+      return;
+    }
+
+    const errProy = validarFechaEnProyectos(empleadoId, fecha);
+    if (errProy) {
+      setError(errProy);
+      return;
+    }
+    if (!idProyecto) {
+      setError("Selecciona el proyecto correspondiente del empleado.");
+      return;
+    }
+    if (esExcusa && archivoExcusa && archivoExcusa.size > 10 * 1024 * 1024) {
+      setError("El archivo adjunto no puede superar los 10 MB.");
+      return;
+    }
+
+    const estadoApi = esExcusa ? "INASISTENCIA" : estado === "AUTO" ? "AUTO" : estado;
+    const estadoFinal = estadoApi === "AUTO" ? estadoCalculado : estadoApi;
+    const entrada = sinHoras ? "00:00:00" : horaEntrada.length === 5 ? `${horaEntrada}:00` : horaEntrada;
+    const salida = sinHoras
+      ? null
+      : horaSalida
+        ? horaSalida.length === 5
+          ? `${horaSalida}:00`
+          : horaSalida
+        : null;
+
+    const observacion = esExcusa
+      ? archivoExcusa
+        ? `EXCUSA (Adjunto: ${archivoExcusa.name})`
+        : "EXCUSA"
+      : esInasistencia
+        ? "INASISTENCIA"
+        : null;
+
     try {
       setSaving(true);
-      setError("");
-      setOk("");
-      await apiRequest("/turnos", {
-        method: "POST",
-        body: JSON.stringify({
-          id_empleado: Number(empleadoId),
-          id_proyecto: Number(proyectoId),
-          tipo_turno: tipoTurno,
-          hora_inicio: horaInicio.length === 5 ? `${horaInicio}:00` : horaInicio,
-          hora_fin: horaFin.length === 5 ? `${horaFin}:00` : horaFin,
-          fecha,
-        }),
-      });
-      setOk("Turno asignado correctamente.");
-      void reloadAsignaciones();
+
+      if (esExcusa && archivoExcusa) {
+        const formData = new FormData();
+        formData.append("fecha", fecha);
+        formData.append("hora_entrada", entrada);
+        if (salida) formData.append("hora_salida", salida);
+        formData.append("estado_asistencia", estadoFinal);
+        formData.append("observacion", observacion || "EXCUSA");
+        formData.append("id_proyecto", String(Number(idProyecto)));
+        formData.append("archivo", archivoExcusa);
+
+        await apiRequest(`/empleados/${empleadoId}/asistencias`, {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        await apiRequest(`/empleados/${empleadoId}/asistencias`, {
+          method: "POST",
+          body: JSON.stringify({
+            fecha,
+            hora_entrada: entrada,
+            hora_salida: salida,
+            estado_asistencia: estadoFinal,
+            observacion,
+            id_proyecto: idProyecto ? Number(idProyecto) : null,
+          }),
+        });
+      }
+
+      const mensajeGuardado = esExcusa
+        ? `Excusa guardada para ${nombreEmpleadoSeleccionado} (${nombreProyectoSeleccionado}) el ${fecha}${
+            archivoExcusa ? ` con archivo "${archivoExcusa.name}"` : ""
+          }.`
+        : esInasistencia
+          ? `Inasistencia guardada para ${nombreEmpleadoSeleccionado} (${nombreProyectoSeleccionado}) el ${fecha}.`
+          : `Asistencia (${estadoFinal}) guardada para ${nombreEmpleadoSeleccionado} (${nombreProyectoSeleccionado}) el ${fecha} a las ${entrada.slice(0, 5)}.`;
+
+      setOk(mensajeGuardado);
+      window.alert(mensajeGuardado);
+
+      if (estado === "PRESENTE" || estado === "RETARDO" || estado === "AUTO") {
+        setHoraEntrada(ahoraHHMM());
+        setHoraSalida("");
+      }
+      if (esExcusa) {
+        setArchivoExcusa(null);
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar");
+      const msgError = err instanceof Error ? err.message : "No se pudo guardar";
+      setError(msgError);
+      window.alert(`Error al guardar: ${msgError}`);
     } finally {
       setSaving(false);
     }
@@ -171,61 +255,103 @@ export default function Turnos() {
 
   return (
     <AppShell>
-      <Breadcrumb items={[{ label: "Asistencia", to: "/asistencia" }, { label: "Turnos" }]} />
+      <Breadcrumb items={[{ label: "Asistencia", to: "/asistencia" }, { label: "Registrar" }]} />
       <div className="page-card">
-        <h1 className="page-title">Asignar turno</h1>
+        <h1 className="page-title">Registrar asistencia</h1>
         <p className="page-subtitle">
-          El proyecto se elige según las asignaciones activas del empleado. Puedes tener varias
-          (ej. lun–mié en una obra y jue–sáb en otra). Se validan cruces de horario el mismo día.
+          Presente/Retardo: hora = ahora. No se registra fuera de las fechas de inicio/fin del
+          proyecto al que esté asignado el empleado.
         </p>
-        {error && <p style={{ color: "#b00020" }}>{error}</p>}
-        {ok && <p style={{ color: "#047857" }}>{ok}</p>}
-        {sinAsignacion && (
+
+        {loading && <p style={{ marginTop: 12 }}>Cargando empleados…</p>}
+        {ok && <p style={{ color: "#047857", marginTop: 12 }}>{ok}</p>}
+
+        {estado === "EXCUSA" && (
           <div
             style={{
-              background: "#fff7ed",
-              border: "1px solid #fed7aa",
-              borderRadius: 10,
+              marginTop: 12,
               padding: "12px 14px",
-              marginBottom: 12,
-              fontSize: 13.5,
-              color: "#9a3412",
+              borderRadius: 10,
+              border: "1px solid #d6d3d1",
+              background: "#fafaf9",
             }}
           >
-            Este empleado no tiene proyecto asignado.{" "}
-            <Link
-              to={`/proyectos/asignacion?empleado=${empleadoId}`}
-              style={{ fontWeight: 700, color: "#c2410c" }}
+            <label
+              htmlFor="archivo-excusa"
+              style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#1c1917", marginBottom: 6 }}
             >
-              Ir a asignarlo →
-            </Link>
+              Adjuntar archivo de excusa (PDF, imagen o documento · máx. 10 MB)
+            </label>
+            <input
+              id="archivo-excusa"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setArchivoExcusa(file);
+              }}
+              style={{ fontSize: 13 }}
+            />
+            {archivoExcusa && (
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 8,
+                  fontSize: 13,
+                  color: "#292524",
+                }}
+              >
+                <span>
+                  Archivo: <strong>{archivoExcusa.name}</strong> (
+                  {(archivoExcusa.size / 1024).toFixed(1)} KB)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setArchivoExcusa(null)}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    border: "1px solid #d6d3d1",
+                    background: "#fff",
+                    cursor: "pointer",
+                    fontSize: 12,
+                  }}
+                >
+                  Quitar
+                </button>
+              </div>
+            )}
           </div>
         )}
-        {empleadoId && !sinAsignacion && (
-          <p className="field-hint" style={{ marginBottom: 8 }}>
-            {proyectosDelEmpleado.length} proyecto(s) activo(s) para este empleado.
-          </p>
-        )}
-        <TurnoForm
+
+        <AsistenciaForm
+          errorMsg={error}
           empleados={empleados}
-          proyectos={proyectosDelEmpleado}
           usuariosMap={usuariosMap}
+          proyectosMap={proyectosMap}
+          asignaciones={asignaciones}
           empleadoId={empleadoId}
-          setEmpleadoId={setEmpleadoId}
-          proyectoId={proyectoId}
-          setProyectoId={setProyectoId}
-          tipoTurno={tipoTurno}
-          setTipoTurno={setTipoTurno}
+          setEmpleadoId={(v) => {
+            setEmpleadoId(v);
+            setIdProyecto("");
+          }}
+          idProyecto={idProyecto}
+          setIdProyecto={setIdProyecto}
           fecha={fecha}
           setFecha={setFecha}
-          horaInicio={horaInicio}
-          setHoraInicio={setHoraInicio}
-          horaFin={horaFin}
-          setHoraFin={setHoraFin}
+          horaEntrada={horaEntrada}
+          setHoraEntrada={setHoraEntrada}
+          horaSalida={horaSalida}
+          setHoraSalida={setHoraSalida}
+          estado={estado}
+          setEstado={setEstado}
+          estadoCalculado={estadoCalculado}
           loading={loading}
           saving={saving}
           onGuardar={guardar}
-          sinAsignacion={sinAsignacion}
         />
       </div>
     </AppShell>

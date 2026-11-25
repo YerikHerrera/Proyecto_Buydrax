@@ -34,6 +34,7 @@ export default function AsignacionEmpleado() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [errorFecha, setErrorFecha] = useState("");
+  const [confirmarGuardado, setConfirmarGuardado] = useState(false);
   const [cambiarId, setCambiarId] = useState<number | null>(null);
   const [nuevaCuadrilla, setNuevaCuadrilla] = useState("");
   const [cuadrillasOpts, setCuadrillasOpts] = useState<string[]>([
@@ -90,6 +91,10 @@ export default function AsignacionEmpleado() {
     };
   }, [empleadoFromUrl]);
 
+  useEffect(() => {
+    setConfirmarGuardado(false);
+  }, [empleadoId, proyectoId, rol, cuadrilla, fechaInicio]);
+
   const proyectosDisponibles = useMemo(() => {
     if (!empleadoId) return proyectos;
     const ya = new Set(
@@ -102,12 +107,32 @@ export default function AsignacionEmpleado() {
 
   useEffect(() => {
     if (!proyectoId) return;
-    const ok = proyectosDisponibles.some((p) => String(p.id_proyecto) === String(proyectoId));
-    if (!ok) setProyectoId("");
+    const disponible = proyectosDisponibles.some((p) => String(p.id_proyecto) === String(proyectoId));
+    if (!disponible) setProyectoId("");
   }, [proyectoId, proyectosDisponibles]);
 
   const nombreProyecto = (id: number) =>
     proyectos.find((p) => p.id_proyecto === id)?.nombre || `Proyecto #${id}`;
+
+  const nombreEmpleadoSeleccionado = useMemo(() => {
+    if (!empleadoId) return "";
+    const emp = empleados.find((e) => String(e.id_empleado) === String(empleadoId));
+    if (!emp) return `Empleado #${empleadoId}`;
+
+    const usr = emp.id_usuario ? usuariosMap[emp.id_usuario] : undefined;
+    const empRecord = emp as unknown as Record<string, unknown>;
+    const usrRecord = usr as unknown as Record<string, unknown> | undefined;
+
+    const nombreDesdeUsuario = [usr?.nombres, usr?.apellidos].filter(Boolean).join(" ").trim();
+    const nombreFallback =
+      nombreDesdeUsuario ||
+      String(usrRecord?.nombre_completo ?? "") ||
+      String(usrRecord?.nombre ?? "") ||
+      String(empRecord?.nombre ?? "") ||
+      `Empleado #${emp.id_empleado}`;
+
+    return emp.cargo ? `${nombreFallback} (${emp.cargo})` : nombreFallback;
+  }, [empleadoId, empleados, usuariosMap]);
 
   const activasDelEmpleado = useMemo(() => {
     if (!empleadoId) return [];
@@ -116,32 +141,27 @@ export default function AsignacionEmpleado() {
     );
   }, [asignaciones, empleadoId]);
 
-  const guardar = async () => {
-    setErrorFecha("");
-    if (!empleadoId || !proyectoId || !rol || !fechaInicio) {
-      setError("Completa todos los campos obligatorios.");
-      return;
-    }
-    const hoy = new Date().toISOString().slice(0, 10);
-    if (fechaInicio > hoy) {
-      setErrorFecha("La fecha de asignación no puede ser futura.");
-      setError("Revisa la fecha de asignación.");
-      return;
-    }
+  const ejecutarGuardado = async () => {
+    const cuadrillaFinal = cuadrilla.trim() || "General";
+    const nombreProy = nombreProyecto(Number(proyectoId));
+
     try {
       setSaving(true);
       setError("");
       setOk("");
+      setConfirmarGuardado(false);
       await apiRequest(`/proyectos/${Number(proyectoId)}/asignaciones`, {
         method: "POST",
         body: JSON.stringify({
           id_empleado: Number(empleadoId),
           rol_en_proyecto: rol,
-          cuadrilla: cuadrilla.trim() || "General",
+          cuadrilla: cuadrillaFinal,
           fecha_asignacion: fechaInicio,
         }),
       });
-      setOk("Asignación registrada. Puedes vincular el mismo empleado a otro proyecto.");
+      setOk(
+        `Asignación registrada: ${nombreEmpleadoSeleccionado} quedó vinculado a "${nombreProy}" como ${rol} en ${cuadrillaFinal} desde ${fechaInicio}.`
+      );
       setProyectoId("");
       setCuadrilla("");
       await cargarAsignaciones();
@@ -150,6 +170,33 @@ export default function AsignacionEmpleado() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const guardar = async () => {
+    setErrorFecha("");
+    setError("");
+    setOk("");
+
+    if (!empleadoId || !proyectoId || !rol || !fechaInicio) {
+      setConfirmarGuardado(false);
+      setError("Completa todos los campos obligatorios antes de asignar.");
+      return;
+    }
+
+    const hoy = new Date().toISOString().slice(0, 10);
+    if (fechaInicio > hoy) {
+      setConfirmarGuardado(false);
+      setErrorFecha("La fecha de asignación no puede ser futura.");
+      setError("Revisa la fecha de asignación.");
+      return;
+    }
+
+    if (!confirmarGuardado) {
+      setConfirmarGuardado(true);
+      return;
+    }
+
+    await ejecutarGuardado();
   };
 
   const retirar = async (id: number) => {
@@ -161,7 +208,6 @@ export default function AsignacionEmpleado() {
       setError(err instanceof Error ? err.message : "No se pudo retirar");
     }
   };
-
 
   useEffect(() => {
     let cancelled = false;
@@ -183,7 +229,6 @@ export default function AsignacionEmpleado() {
       cancelled = true;
     };
   }, [proyectoId]);
-
 
   const onCambiarCuadrilla = async (idAsig: number) => {
     if (!nuevaCuadrilla.trim()) {
@@ -223,8 +268,89 @@ export default function AsignacionEmpleado() {
           <p className="preselect-hint">Preseleccionado desde Asignar turno.</p>
         )}
 
-        {error && <p style={{ color: "#b00020" }}>{error}</p>}
-        {ok && <p style={{ color: "#047857" }}>{ok}</p>}
+        {error && <p style={{ color: "#b00020", fontWeight: 500 }}>{error}</p>}
+        {ok && (
+          <div
+            role="status"
+            style={{
+              background: "#ecfdf5",
+              border: "1px solid #6ee7b7",
+              color: "#065f46",
+              padding: "10px 14px",
+              borderRadius: 10,
+              marginBottom: 12,
+              fontSize: 14,
+              fontWeight: 500,
+            }}
+          >
+            {ok}
+          </div>
+        )}
+
+        {confirmarGuardado && (
+          <div
+            role="alert"
+            style={{
+              background: "#fffbeb",
+              border: "1px solid #f59e0b",
+              color: "#92400e",
+              padding: "12px 14px",
+              borderRadius: 10,
+              marginBottom: 12,
+              fontSize: 14,
+            }}
+          >
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>
+              Advertencia: confirma los datos de asignación
+            </div>
+            <div style={{ lineHeight: 1.45 }}>
+              Vas a asignar a <strong>{nombreEmpleadoSeleccionado}</strong> al proyecto{" "}
+              <strong>{nombreProyecto(Number(proyectoId))}</strong> con rol <strong>{rol}</strong>, en{" "}
+              <strong>{cuadrilla.trim() || "General"}</strong> a partir del <strong>{fechaInicio}</strong>.
+              {activasDelEmpleado.length > 0 && (
+                <span>
+                  {" "}
+                  Este empleado ya cuenta con {activasDelEmpleado.length} asignación(es) activa(s).
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => void ejecutarGuardado()}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#d97706",
+                  color: "#fff",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontSize: 13,
+                }}
+              >
+                {saving ? "Guardando..." : "Confirmar y guardar"}
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setConfirmarGuardado(false)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #d6d3d1",
+                  background: "#fff",
+                  color: "#44403c",
+                  cursor: "pointer",
+                  fontSize: 13,
+                }}
+              >
+                Revisar campos
+              </button>
+            </div>
+          </div>
+        )}
 
         <AsignacionEmpleadoForm
           empleados={empleados}

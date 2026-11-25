@@ -29,17 +29,22 @@ export default function Perfiles() {
       const porDocumento = /^\d+$/.test(v);
       const [lista, users] = await Promise.all([
         porDocumento ? listarEmpleados({ documento: v }) : listarEmpleados(),
-        mapaUsuarios().catch(() => ({})),
+        mapaUsuarios().catch(() => ({} as Record<number, UsuarioPublic>)),
       ]);
-      setMap(users);
+      const usersSeguros = (users ?? {}) as Record<number, UsuarioPublic>;
+      setMap(usersSeguros);
 
       let found = lista;
       if (!porDocumento) {
         const lower = v.toLowerCase();
         found = lista.filter((e) => {
-          const u = users[e.id_usuario];
+          const u = usersSeguros[e.id_usuario];
           const n = u ? nombreUsuario(u).toLowerCase() : "";
-          return n.includes(lower) || e.numero_documento.includes(v) || e.cargo.toLowerCase().includes(lower);
+          return (
+            n.includes(lower) ||
+            e.numero_documento.includes(v) ||
+            e.cargo.toLowerCase().includes(lower)
+          );
         });
       }
       if (!found.length) setError("No se encontró ningún empleado.");
@@ -53,7 +58,9 @@ export default function Perfiles() {
 
   return (
     <AppShell>
-      <Breadcrumb items={[{ label: "Empleados", to: "/empleados" }, { label: "Ficha del empleado" }]} />
+      <Breadcrumb
+        items={[{ label: "Empleados", to: "/empleados" }, { label: "Ficha del empleado" }]}
+      />
       <div className="page-card">
         <h1 className="page-title">Ficha del empleado</h1>
         <p className="page-subtitle" style={{ maxWidth: 640, lineHeight: 1.55 }}>
@@ -62,7 +69,12 @@ export default function Perfiles() {
           alta ni el de edición: para modificar usa la lista → lápiz, o{" "}
           <Link to="/empleados">Lista de empleados</Link>.
         </p>
-        {sesion && <p style={{ fontSize: 13, color: "#64748b" }}>Sesión actual: {sesion.nombre}{sesion.rol ? ` · ${sesion.rol}` : ""}</p>}
+        {sesion && (
+          <p style={{ fontSize: 13, color: "#64748b" }}>
+            Sesión actual: {sesion.nombre}
+            {sesion.rol ? ` · ${sesion.rol}` : ""}
+          </p>
+        )}
         <PerfilSearch value={q} loading={loading} onChange={setQ} onSearch={buscar} />
         {error && <p style={{ color: "#b00020", marginTop: 12 }}>{error}</p>}
         {emp && <PerfilCard empleado={emp} usuarios={map} />}

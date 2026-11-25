@@ -22,20 +22,10 @@ class RepositorioProyectos:
         estado: Optional[str] = None,
         dominio: Optional[str] = None,
         incluir_eliminados: bool = False,
-        id_usuario_supervisor: Optional[int] = None,
     ) -> Sequence[Proyecto]:
         q = select(Proyecto)
         if not incluir_eliminados:
             q = q.where(Proyecto.estado_proyecto != "FINALIZADO")
-        if id_usuario_supervisor is not None:
-            # Sin ficha de supervisor la subconsulta queda vacía: no ve ningún proyecto
-            q = q.where(
-                Proyecto.id_supervisor.in_(
-                    select(Supervisor.id_supervisor).where(
-                        Supervisor.id_usuario == id_usuario_supervisor
-                    )
-                )
-            )
         if estado:
             q = q.where(Proyecto.estado_proyecto == estado.upper())
         if dominio:
@@ -45,10 +35,6 @@ class RepositorioProyectos:
                 .where(sql_dominio_correo(Usuario.correo) == dominio.lower())
             )
         return self.db.execute(q.order_by(Proyecto.id_proyecto.desc())).scalars().all()
-
-    def es_del_supervisor(self, proyecto: Proyecto, id_usuario: int) -> bool:
-        supervisor = self.get_supervisor(proyecto.id_supervisor)
-        return supervisor is not None and supervisor.id_usuario == id_usuario
 
     def crear(self, proyecto: Proyecto) -> Proyecto:
         self.db.add(proyecto)
@@ -89,6 +75,27 @@ class RepositorioProyectos:
         return self.db.get(AsignacionProyecto, id_asignacion)
 
     def crear_asignacion(self, asig: AsignacionProyecto) -> AsignacionProyecto:
+        existente = self.db.execute(
+            select(AsignacionProyecto).where(
+                AsignacionProyecto.id_proyecto == asig.id_proyecto,
+                AsignacionProyecto.id_empleado == asig.id_empleado,
+            )
+        ).scalar_one_or_none()
+
+        if existente is not None:
+            if not existente.activo:
+                existente.activo = True
+                existente.cuadrilla = asig.cuadrilla
+                existente.id_cuadrilla = asig.id_cuadrilla
+                existente.rol_en_proyecto = asig.rol_en_proyecto
+                existente.fecha_asignacion = asig.fecha_asignacion
+                self.db.commit()
+                self.db.refresh(existente)
+                return existente
+            raise ValueError(
+                f"El empleado {asig.id_empleado} ya tiene una asignación activa en el proyecto {asig.id_proyecto}."
+            )
+
         self.db.add(asig)
         self.db.commit()
         self.db.refresh(asig)

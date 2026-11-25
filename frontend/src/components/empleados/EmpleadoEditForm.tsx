@@ -1,4 +1,3 @@
-import { CIUDADES_CO, BARRIOS_BOGOTA, SALARIOS_SUGERIDOS } from "../../data/ubicacionesColombia";
 const CARGOS = [
   "Ayudante de obra",
   "Oficial de construcción",
@@ -123,56 +122,20 @@ export default function EmpleadoEditForm(p: EmpleadoEditFormProps) {
 
       <div>
         <label className="agregar-label">Barrio</label>
-        <select
+        <input
           className="agregar-input"
-          value={BARRIOS_BOGOTA.includes(p.barrio as any) ? p.barrio : p.barrio ? "Otro" : ""}
-          onChange={(e) => {
-            if (e.target.value === "Otro") p.setBarrio("");
-            else p.setBarrio(e.target.value);
-          }}
-        >
-          <option value="">Seleccionar…</option>
-          {BARRIOS_BOGOTA.map((b) => (
-            <option key={b} value={b}>{b}</option>
-          ))}
-        </select>
-        {(!BARRIOS_BOGOTA.includes(p.barrio as any) || p.barrio === "") && (
-          <input
-            className="agregar-input"
-            style={{ marginTop: 8 }}
-            placeholder="Escribe el barrio"
-            value={p.barrio}
-            maxLength={80}
-            onChange={(e) => p.setBarrio(e.target.value.slice(0, 80))}
-          />
-        )}
+          value={p.barrio}
+          onChange={(e) => p.setBarrio(e.target.value)}
+        />
       </div>
 
       <div>
         <label className="agregar-label">Ciudad *</label>
-        <select
+        <input
           className="agregar-input"
-          value={CIUDADES_CO.includes(p.ciudad as any) ? p.ciudad : p.ciudad ? "Otro" : ""}
-          onChange={(e) => {
-            if (e.target.value === "Otro") p.setCiudad("");
-            else p.setCiudad(e.target.value);
-          }}
-        >
-          <option value="">Seleccionar…</option>
-          {CIUDADES_CO.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        {(!CIUDADES_CO.includes(p.ciudad as any) || p.ciudad === "") && (
-          <input
-            className="agregar-input"
-            style={{ marginTop: 8 }}
-            placeholder="Escribe la ciudad"
-            value={p.ciudad}
-            maxLength={80}
-            onChange={(e) => p.setCiudad(e.target.value.slice(0, 80))}
-          />
-        )}
+          value={p.ciudad}
+          onChange={(e) => p.setCiudad(e.target.value)}
+        />
       </div>
 
       <div>
@@ -203,32 +166,14 @@ export default function EmpleadoEditForm(p: EmpleadoEditFormProps) {
       </div>
 
       <div>
-        <label className="agregar-label">Salario * (COP)</label>
-        <select
-          className="agregar-input"
-          value={SALARIOS_SUGERIDOS.includes(p.salario as any) ? p.salario : p.salario ? "__custom" : ""}
-          onChange={(e) => {
-            if (e.target.value === "__custom") return;
-            p.setSalario(e.target.value);
-          }}
-        >
-          <option value="">Sugeridos…</option>
-          {SALARIOS_SUGERIDOS.map((s) => (
-            <option key={s} value={s}>
-              {Number(s).toLocaleString("es-CO")}
-            </option>
-          ))}
-          <option value="__custom">Otro monto…</option>
-        </select>
+        <label className="agregar-label">Salario *</label>
         <input
           className="agregar-input"
-          style={{ marginTop: 8 }}
-          type="text"
-          inputMode="decimal"
-          placeholder="Monto exacto"
+          type="number"
+          min="0"
+          step="0.01"
           value={p.salario}
-          maxLength={12}
-          onChange={(e) => p.setSalario(e.target.value.replace(/[^0-9.]/g, "").slice(0, 12))}
+          onChange={(e) => p.setSalario(e.target.value)}
         />
       </div>
 

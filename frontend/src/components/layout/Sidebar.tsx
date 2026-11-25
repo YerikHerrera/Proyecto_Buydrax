@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { useSidebar } from "./SidebarContext";
 import { menuPermitidoPorRol, esAdminRrhh, esEmpresa, esAdminOEmpresa, esEmpleado, esSupervisor, rolActual } from "../../services/session";
 
 type SubItem = { to: string; label: string };
@@ -15,7 +14,7 @@ type Item = {
 
 export default function Sidebar() {
   const location = useLocation();
-  const { abierto, setAbierto } = useSidebar();
+  const [abierto, setAbierto] = useState(false);
   const rolKey = rolActual();
   const perms = useMemo(() => menuPermitidoPorRol(), [rolKey]);
 
@@ -173,6 +172,15 @@ export default function Sidebar() {
 
   return (
     <>
+      <button
+        type="button"
+        className="sidebar-toggle"
+        aria-label="Abrir menú"
+        onClick={() => setAbierto((v) => !v)}
+      >
+        <i className={`bi ${abierto ? "bi-x-lg" : "bi-list"}`}></i>
+      </button>
+
       {abierto && (
         <div className="sidebar-overlay" onClick={() => setAbierto(false)} aria-hidden />
       )}
