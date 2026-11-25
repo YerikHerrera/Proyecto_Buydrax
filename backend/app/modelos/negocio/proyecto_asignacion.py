@@ -52,6 +52,9 @@ class AsignacionProyecto(Base):
         Integer, ForeignKey("empleado.id_empleado", ondelete="CASCADE", onupdate="CASCADE"), nullable=False
     )
     cuadrilla: Mapped[str] = mapped_column(String(60), nullable=False)
+    id_cuadrilla: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("cuadrilla.id_cuadrilla", ondelete="SET NULL", onupdate="CASCADE"), nullable=True
+    )
     rol_en_proyecto: Mapped[str] = mapped_column(String(60), nullable=False)
     fecha_asignacion: Mapped[date] = mapped_column(Date, nullable=False)
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

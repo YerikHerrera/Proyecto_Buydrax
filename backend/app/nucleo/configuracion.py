@@ -26,6 +26,19 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 480  # 8 horas
 
+    # SMTP (recuperación de contraseña)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+
+    # Google OAuth (GIS)
+    google_client_id: str = ""
+
+    # Front (enlaces en correos)
+    frontend_url: str = "http://127.0.0.1:5173"
+
 
 @lru_cache
 def get_settings() -> Settings:

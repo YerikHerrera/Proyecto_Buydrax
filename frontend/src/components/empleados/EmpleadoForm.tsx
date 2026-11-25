@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { nombreUsuario, type UsuarioPublic } from "../../services/usuariosService";
+import { CIUDADES_CO, BARRIOS_BOGOTA, SALARIOS_SUGERIDOS } from "../../data/ubicacionesColombia";
 
 const CARGOS = [
   "Administrador de RRHH",
@@ -193,7 +194,10 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
         <input
           className="agregar-input"
           value={numeroDocumento}
-          onChange={(e) => setNumeroDocumento(e.target.value)}
+          onChange={(e) => setNumeroDocumento(e.target.value.replace(/[^0-9A-Za-z]/g, "").slice(0, 20))}
+          maxLength={20}
+          inputMode="numeric"
+          placeholder="Solo números / alfanumérico, máx. 20" 
         />
       </div>
 
@@ -212,7 +216,10 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
         <input
           className="agregar-input"
           value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
+          onChange={(e) => setTelefono(e.target.value.replace(/[^0-9+\s-]/g, "").slice(0, 15))}
+          maxLength={15}
+          inputMode="tel"
+          placeholder="Máx. 15 dígitos" 
         />
       </div>
 
@@ -222,7 +229,10 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
           className="agregar-input"
           type="email"
           value={correoPersonal}
-          onChange={(e) => setCorreoPersonal(e.target.value)}
+          onChange={(e) => setCorreoPersonal(e.target.value.slice(0, 120))}
+          maxLength={120}
+          type="email"
+          placeholder="correo@dominio.com" 
         />
       </div>
 
@@ -231,26 +241,63 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
         <input
           className="agregar-input"
           value={calle}
-          onChange={(e) => setCalle(e.target.value)}
+          onChange={(e) => setCalle(e.target.value.slice(0, 120))}
+          maxLength={120} 
         />
       </div>
 
       <div>
         <label className="agregar-label">Barrio</label>
-        <input
+        <select
           className="agregar-input"
-          value={barrio}
-          onChange={(e) => setBarrio(e.target.value)}
-        />
+          value={BARRIOS_BOGOTA.includes(barrio as any) ? barrio : barrio ? "Otro" : ""}
+          onChange={(e) => {
+            if (e.target.value === "Otro") setBarrio("");
+            else setBarrio(e.target.value);
+          }}
+        >
+          <option value="">Seleccionar…</option>
+          {BARRIOS_BOGOTA.map((b) => (
+            <option key={b} value={b}>{b}</option>
+          ))}
+        </select>
+        {(!BARRIOS_BOGOTA.includes(barrio as any) || barrio === "") && (
+          <input
+            className="agregar-input"
+            style={{ marginTop: 8 }}
+            placeholder="Escribe el barrio"
+            value={barrio}
+            maxLength={80}
+            onChange={(e) => setBarrio(e.target.value.slice(0, 80))}
+          />
+        )}
       </div>
 
       <div>
         <label className="agregar-label">Ciudad *</label>
-        <input
+        <select
           className="agregar-input"
-          value={ciudad}
-          onChange={(e) => setCiudad(e.target.value)}
-        />
+          value={CIUDADES_CO.includes(ciudad as any) ? ciudad : ciudad ? "Otro" : ""}
+          onChange={(e) => {
+            if (e.target.value === "Otro") setCiudad("");
+            else setCiudad(e.target.value);
+          }}
+        >
+          <option value="">Seleccionar…</option>
+          {CIUDADES_CO.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        {(!CIUDADES_CO.includes(ciudad as any) || ciudad === "") && (
+          <input
+            className="agregar-input"
+            style={{ marginTop: 8 }}
+            placeholder="Escribe la ciudad"
+            value={ciudad}
+            maxLength={80}
+            onChange={(e) => setCiudad(e.target.value.slice(0, 80))}
+          />
+        )}
       </div>
 
       <div>
@@ -259,7 +306,8 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
           className="agregar-input"
           list="cargos-sugeridos"
           value={cargo}
-          onChange={(e) => setCargo(e.target.value)}
+          onChange={(e) => setCargo(e.target.value.slice(0, 80))}
+          maxLength={80}
           placeholder="Escribe o elige un cargo"
           autoComplete="off"
         />
@@ -282,14 +330,32 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
       </div>
 
       <div>
-        <label className="agregar-label">Salario *</label>
+        <label className="agregar-label">Salario * (COP)</label>
+        <select
+          className="agregar-input"
+          value={SALARIOS_SUGERIDOS.includes(salario as any) ? salario : salario ? "__custom" : ""}
+          onChange={(e) => {
+            if (e.target.value === "__custom") return;
+            setSalario(e.target.value);
+          }}
+        >
+          <option value="">Sugeridos…</option>
+          {SALARIOS_SUGERIDOS.map((s) => (
+            <option key={s} value={s}>
+              {Number(s).toLocaleString("es-CO")}
+            </option>
+          ))}
+          <option value="__custom">Otro monto…</option>
+        </select>
         <input
           className="agregar-input"
-          type="number"
-          min="0"
-          step="0.01"
+          style={{ marginTop: 8 }}
+          type="text"
+          inputMode="decimal"
+          placeholder="Monto exacto"
           value={salario}
-          onChange={(e) => setSalario(e.target.value)}
+          maxLength={12}
+          onChange={(e) => setSalario(e.target.value.replace(/[^0-9.]/g, "").slice(0, 12))}
         />
       </div>
 
@@ -311,7 +377,8 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
         <select
           className="agregar-input"
           value={banco}
-          onChange={(e) => setBanco(e.target.value)}
+          onChange={(e) => setBanco(e.target.value.slice(0, 60))}
+          maxLength={60} 
         >
           <option value="">Seleccionar</option>
           <option value="Bancolombia">Bancolombia</option>
@@ -327,7 +394,10 @@ export default function EmpleadoForm(props: EmpleadoFormProps) {
         <input
           className="agregar-input"
           value={numeroCuenta}
-          onChange={(e) => setNumeroCuenta(e.target.value)}
+          onChange={(e) => setNumeroCuenta(e.target.value.replace(/[^0-9-]/g, "").slice(0, 30))}
+          maxLength={30}
+          inputMode="numeric"
+          placeholder="Máx. 30 caracteres" 
         />
       </div>
 

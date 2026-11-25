@@ -4,11 +4,18 @@ import AppShell from "../components/layout/AppShell";
 import Breadcrumb from "../components/layout/Breadcrumb";
 import RoleGate from "../components/RoleGate";
 import ProyectoTable from "../components/proyectos/ProyectoTable";
-import { listarProyectos, type Proyecto } from "../services/proyectosService";
+import {
+  listarProyectos,
+  type Proyecto,
+} from "../services/proyectosService";
+import { esAdminRrhh, esSupervisor } from "../services/session";
+import Toast from "../components/ui/Toast";
+import { useToast } from "../hooks/useToast";
 
 export default function ListaProyectos() {
+  // Admin y Supervisor pueden ver listado (supervisor solo los suyos)
   return (
-    <RoleGate require="admin">
+    <RoleGate require="aprobar">
       <ListaProyectosInner />
     </RoleGate>
   );
@@ -18,18 +25,30 @@ function ListaProyectosInner() {
   const navigate = useNavigate();
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { toast, showToast, closeToast } = useToast();
+  const esAdmin = esAdminRrhh();
+  const soloSupervisor = esSupervisor() && !esAdmin;
 
   useEffect(() => {
-    listarProyectos()
-      .then((list) => {
-        const arr = Array.isArray(list) ? list : [];
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await listarProyectos();
+        // El backend ya entrega solo los proyectos permitidos según el rol
+        const arr = Array.isArray(list) ? [...list] : [];
         arr.sort((a, b) => (b.id_proyecto || 0) - (a.id_proyecto || 0));
-        setProyectos(arr);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar"))
-      .finally(() => setLoading(false));
-  }, []);
+        if (!cancelled) setProyectos(arr);
+      } catch (e) {
+        if (!cancelled)
+          showToast(e instanceof Error ? e.message : "Error al cargar proyectos", "error");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showToast]);
 
   const ordenados = useMemo(
     () => [...proyectos].sort((a, b) => (b.id_proyecto || 0) - (a.id_proyecto || 0)),
@@ -38,6 +57,7 @@ function ListaProyectosInner() {
 
   return (
     <AppShell>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
       <Breadcrumb items={[{ label: "Proyectos", to: "/proyectos" }, { label: "Listado" }]} />
       <div className="page-card">
         <div
@@ -53,23 +73,36 @@ function ListaProyectosInner() {
           <div>
             <h1 className="page-title">Listado de proyectos</h1>
             <p className="page-subtitle">
-              Más recientes primero. Usa <strong>Editar</strong> para abrir el formulario de
-              edición.
+              {soloSupervisor
+                ? "Solo se muestran los proyectos a los que estás vinculado como supervisor."
+                : "Más recientes primero. Usa Editar para abrir el formulario de edición."}
             </p>
           </div>
-          <Link
-            to="/proyectos/crear"
-            className="agregar-btn-primario"
-            style={{ textDecoration: "none", whiteSpace: "nowrap" }}
-          >
-            + Crear proyecto
-          </Link>
+          {esAdmin && (
+            <Link
+              to="/proyectos/crear"
+              className="agregar-btn-primario"
+              style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+            >
+              + Crear proyecto
+            </Link>
+          )}
         </div>
-        {error && <p style={{ color: "#b00020" }}>{error}</p>}
         {loading && <p style={{ color: "#64748b" }}>Cargando…</p>}
+        {!loading && ordenados.length === 0 && (
+          <p style={{ color: "#64748b" }}>
+            {soloSupervisor
+              ? "No tienes proyectos vinculados todavía."
+              : "No hay proyectos registrados."}
+          </p>
+        )}
         <ProyectoTable
           proyectos={ordenados}
-          onEditar={(p) => navigate(`/proyectos/crear?edit=${p.id_proyecto}`)}
+          onEditar={
+            esAdmin
+              ? (p) => navigate(`/proyectos/crear?edit=${p.id_proyecto}`)
+              : undefined
+          }
         />
       </div>
     </AppShell>

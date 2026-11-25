@@ -39,6 +39,9 @@ class Asistencia(Base):
     estado_asistencia: Mapped[str] = mapped_column(estado_asistencia_enum, nullable=False)
     observacion: Mapped[str | None] = mapped_column(String(255), nullable=True)
     fecha_creacion: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    id_proyecto: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("proyecto.id_proyecto", ondelete="SET NULL", onupdate="CASCADE"), nullable=True
+    )
 
 
 

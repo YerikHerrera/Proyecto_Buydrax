@@ -11,7 +11,7 @@ from app.esquemas.comunes import ORMModel as ORM
 
 class NominaCreate(BaseModel):
     id_obra: Optional[int] = None
-    id_configuracion: int
+    id_configuracion: Optional[int] = None
     periodo_inicio: date
     periodo_fin: date
     tipo_nomina: str

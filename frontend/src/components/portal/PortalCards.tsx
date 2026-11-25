@@ -1,22 +1,32 @@
 import { Link } from "react-router-dom";
 
 const cards = [
-  { to: "/portal/pagos", title: "Último pago / Desprendibles", desc: "Historial y descarga PDF", icon: "bi-receipt" },
-  { to: "/portal/prestamos", title: "Mis préstamos", desc: "Saldo y próxima cuota", icon: "bi-wallet2" },
+  { to: "/portal/asignacion", title: "Mi cuadrilla / proyecto", desc: "Dónde estás asignado", icon: "bi-people" },
+  { to: "/portal/turnos", title: "Mis turnos", desc: "Horarios programados", icon: "bi-calendar-week" },
+  { to: "/portal/asistencia", title: "Mi asistencia", desc: "Marcas del mes", icon: "bi-calendar-check" },
+  { to: "/portal/horas-extra", title: "Mis horas extra", desc: "Estado de solicitudes", icon: "bi-clock-history" },
+  { to: "/portal/certificaciones", title: "Mis certificaciones", desc: "Vigencia y vencimientos", icon: "bi-award" },
+  { to: "/portal/perfil", title: "Mi perfil", desc: "Datos de usuario y ficha", icon: "bi-person-vcard" },
+  { to: "/portal/pagos", title: "Mis pagos", desc: "Desprendibles", icon: "bi-receipt" },
+  { to: "/portal/prestamos", title: "Mis préstamos", desc: "Saldo y cuotas", icon: "bi-wallet2" },
   { to: "/portal/solicitudes", title: "Mis solicitudes", desc: "Permisos y vacaciones", icon: "bi-inbox" },
-  { to: "/perfiles", title: "Mi información personal", desc: "Datos de contacto y ficha", icon: "bi-person-vcard" },
 ];
 
 export default function PortalCards() {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14, marginTop: 16 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14, marginTop: 16 }}>
       {cards.map((card) => (
         <Link
           key={card.to}
           to={card.to}
           style={{
-            display: "block", padding: 18, borderRadius: 14, border: "1px solid #e2e8f0",
-            background: "#fff", textDecoration: "none", color: "inherit",
+            display: "block",
+            padding: 18,
+            borderRadius: 14,
+            border: "1px solid #e2e8f0",
+            background: "#fff",
+            textDecoration: "none",
+            color: "inherit",
             transition: "transform 0.15s, box-shadow 0.15s, border-color 0.15s",
           }}
           onMouseEnter={(e) => {

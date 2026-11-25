@@ -25,6 +25,8 @@ from app.api.endpoints.configuracion import router as configuracion_router
 from app.api.endpoints.evaluaciones import router as evaluaciones_router
 from app.api.endpoints.solicitudes import router as solicitudes_router
 from app.api.endpoints.notificaciones import router as notificaciones_router
+from app.api.endpoints.empresas import router as empresas_router
+from app.api.endpoints.cuadrillas import router as cuadrillas_router
 
 api_router = APIRouter()
 
@@ -51,3 +53,5 @@ api_router.include_router(configuracion_router)
 api_router.include_router(evaluaciones_router)
 api_router.include_router(solicitudes_router)
 api_router.include_router(notificaciones_router)
+api_router.include_router(cuadrillas_router)
+api_router.include_router(empresas_router)

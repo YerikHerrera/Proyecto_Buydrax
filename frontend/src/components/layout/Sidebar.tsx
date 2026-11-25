@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { menuPermitidoPorRol, esAdminRrhh, esEmpresa, esEmpleado, rolActual } from "../../services/session";
+import { useSidebar } from "./SidebarContext";
+import { menuPermitidoPorRol, esAdminRrhh, esEmpresa, esAdminOEmpresa, esEmpleado, esSupervisor, rolActual } from "../../services/session";
 
 type SubItem = { to: string; label: string };
 type Item = {
@@ -14,7 +15,7 @@ type Item = {
 
 export default function Sidebar() {
   const location = useLocation();
-  const [abierto, setAbierto] = useState(false);
+  const { abierto, setAbierto } = useSidebar();
   const rolKey = rolActual();
   const perms = useMemo(() => menuPermitidoPorRol(), [rolKey]);
 
@@ -54,9 +55,14 @@ export default function Sidebar() {
         visible: perms.proyectos,
         children: [
           { to: "/proyectos", label: "Listado de proyectos" },
-          { to: "/proyectos/crear", label: "Crear proyecto" },
-          { to: "/proyectos/asignacion", label: "Asignación de empleado" },
-          { to: "/proyectos/supervisor", label: "Supervisores y cuadrillas" },
+          ...(esAdminOEmpresa() ? [{ to: "/proyectos/crear", label: "Crear proyecto" }] : []),
+          ...(esAdminOEmpresa() || esSupervisor()
+            ? [
+                { to: "/proyectos/asignacion", label: "Asignación de empleado" },
+                { to: "/proyectos/cuadrillas", label: "Gestión de cuadrillas" },
+              ]
+            : []),
+          { to: "/proyectos/supervisor", label: esSupervisor() ? "Mi cuadrilla y proyectos" : "Supervisores y cuadrillas" },
         ],
       },
       {
@@ -113,6 +119,12 @@ export default function Sidebar() {
         visible: true,
         children: [
           { to: "/portal", label: "Inicio" },
+          { to: "/portal/asignacion", label: "Mi cuadrilla / proyecto" },
+          { to: "/portal/turnos", label: "Mis turnos" },
+          { to: "/portal/asistencia", label: "Mi asistencia" },
+          { to: "/portal/horas-extra", label: "Mis horas extra" },
+          { to: "/portal/certificaciones", label: "Mis certificaciones" },
+          { to: "/portal/perfil", label: "Mi perfil" },
           { to: "/portal/pagos", label: "Mis desprendibles" },
           { to: "/portal/prestamos", label: "Mis préstamos" },
           { to: "/portal/solicitudes", label: "Mis solicitudes" },
@@ -161,15 +173,6 @@ export default function Sidebar() {
 
   return (
     <>
-      <button
-        type="button"
-        className="sidebar-toggle"
-        aria-label="Abrir menú"
-        onClick={() => setAbierto((v) => !v)}
-      >
-        <i className={`bi ${abierto ? "bi-x-lg" : "bi-list"}`}></i>
-      </button>
-
       {abierto && (
         <div className="sidebar-overlay" onClick={() => setAbierto(false)} aria-hidden />
       )}

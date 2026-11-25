@@ -41,3 +41,15 @@ export function retirarAsignacion(idAsignacion: number) {
     method: "PATCH",
   });
 }
+
+
+/** PATCH /asignaciones-proyecto/{id}/cuadrilla — cambia cuadrilla sin retirar del proyecto */
+export function cambiarCuadrillaAsignacion(
+  idAsignacion: number,
+  body: { cuadrilla: string; id_cuadrilla?: number }
+) {
+  return apiRequest<AsignacionOut>(`/asignaciones-proyecto/${idAsignacion}/cuadrilla`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}

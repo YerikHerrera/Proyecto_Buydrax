@@ -1,12 +1,24 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import fondo from "../assets/login.jpg";
-import logo from "../assets/logoo.png";
+import logo from "../assets/logobuydrax.png";
 import Toast from "../components/ui/Toast";
 import LoginDemo from "../components/login/LoginDemo";
 import LoginForm from "../components/login/LoginForm";
 import { useToast } from "../hooks/useToast";
 import { login, loginDemo, loginGoogle, type RolDemo } from "../services/authService";
+
+
+function destinoPostLogin(): string {
+  try {
+    const raw = localStorage.getItem("usuario");
+    if (!raw) return "/dashboard";
+    const u = JSON.parse(raw);
+    const rol = String(u.rol || u.cargo || "").toUpperCase().replace(/\s+/g, "_");
+    if (rol === "EMPLEADO" || rol === "EMPLEADO_PORTAL") return "/portal";
+  } catch {}
+  return "/dashboard";
+}
 
 function Login() {
   const navigate = useNavigate();
@@ -14,7 +26,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
-  const { toast, showToast } = useToast();
+  const { toast, showToast, closeToast } = useToast();
 
   const handleLogin = async () => {
     const emailLimpio = email.trim();
@@ -25,15 +37,14 @@ function Login() {
     try {
       setLoading(true);
       await login(emailLimpio, passwordLimpio);
-      showToast("Inicio de sesión exitoso");
-      // Navegación completa para evitar estados colgados del router
-      window.location.assign("/dashboard");
+      showToast("Inicio de sesión exitoso", "success");
       return;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "No se pudo iniciar sesión";
       showToast(message);
       if (message.includes("No se pudo conectar") || message.includes("backend")) setShowDemo(true);
-      setLoading(false);}
+      setLoading(false);
+    }
   };
 
   const handleGoogle = async () => {
@@ -60,7 +71,7 @@ function Login() {
                   id_token: resp.credential,
                 });
                 showToast("Inicio de sesión con Google exitoso");
-                window.location.assign("/dashboard");
+                window.location.assign(destinoPostLogin());
                 resolve();
               } catch (e) {
                 reject(e);
@@ -76,7 +87,7 @@ function Login() {
       if (!correo) { setLoading(false); return; }
       await loginGoogle({ correo: correo.trim().toLowerCase() });
       showToast("Inicio de sesión con Google exitoso");
-      window.location.assign("/dashboard");
+      window.location.assign(destinoPostLogin());
       return;
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "No se pudo iniciar con Google");
@@ -87,15 +98,25 @@ function Login() {
   const entrarDemo = (rol: RolDemo) => {
     loginDemo(rol);
     showToast(`Modo demo · ${rol}`);
-    navigate("/dashboard");
+    navigate(destinoPostLogin());
   };
 
   return (
     <div style={{ backgroundImage: `url(${fondo})`, backgroundSize: "cover", backgroundPosition: "center", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
-      {toast && <Toast message={toast.message} type={toast.type} />}
+      {toast && (
+    <Toast
+    message={toast.message}
+    type={toast.type}
+    onClose={() => {
+      closeToast();
+      // Navegación completa para evitar estados colgados del router
+      if (toast.type === "success") window.location.assign(destinoPostLogin());
+      }}
+    />
+  )}
       <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)" }} />
       <div style={{ position: "relative", zIndex: 1, background: "rgba(10, 12, 24, 0.88)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "48px 44px", width: "100%", maxWidth: "420px", display: "flex", flexDirection: "column", alignItems: "center", gap: "0px", boxShadow: "0 24px 48px rgba(0,0,0,0.35)" }}>
-        <img src={logo} alt="Buydrax" style={{ width: "130px", marginBottom: "8px" }} />
+        <img src={logo} alt="Buydrax" style={{ width: "200px", marginBottom: "8px" }} />
         <h1 style={{ color: "#ffffff", fontSize: "24px", fontWeight: "700", margin: "0 0 4px" }}>Bienvenido a Buydrax</h1>
         <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", marginBottom: "28px", textAlign: "center" }}>
           Gestión de personal y operaciones · Construcción
@@ -106,14 +127,12 @@ function Login() {
           onEmailChange={setEmail} onPasswordChange={setPassword}
           onSubmit={handleLogin} onForgotPassword={() => navigate("/forgot-password")} onGoogle={handleGoogle}
         />
-
-        <Link
+                <Link
           to="/soporte"
           style={{ color: "rgba(255,255,255,0.55)", fontSize: "13px", textDecoration: "none", marginTop: "16px", textAlign: "center" }}
         >
           ¿Problemas para ingresar? Contacta a soporte
         </Link>
-
         <LoginDemo visible={showDemo} onToggle={() => setShowDemo((v) => !v)} onSelectRole={entrarDemo} />
       </div>
     </div>

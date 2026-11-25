@@ -42,11 +42,8 @@ export async function crearAdminParaDominio(body: {
   contrasena: string;
   area_responsable?: string;
 }): Promise<{ mensaje: string; correo: string; dominio: string }> {
-  return apiRequest<{ mensaje: string; correo: string; dominio: string }>(
-    "/empresas/admin",
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-    }
-  );
+  return apiRequest("/empresas/admin", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }

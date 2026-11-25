@@ -4,6 +4,7 @@ import logo from "../../assets/logobuydrax.png";
 import { clearSession, getToken } from "../../services/apiClient";
 import { logout as apiLogout } from "../../services/authService";
 import { etiquetaRol, esAdminRrhh } from "../../services/session";
+import { useSidebar } from "./SidebarContext";
 
 type UsuarioSesion = {
   id: number;
@@ -34,6 +35,7 @@ function leerUsuario(): UsuarioSesion | null {
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { abierto, toggle: toggleSidebar } = useSidebar();
   const [perfilAbierto, setPerfilAbierto] = useState(false);
   const [busquedaAbierta, setBusquedaAbierta] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -114,6 +116,15 @@ export default function Navbar() {
   return (
     <header className="app-navbar">
       <div className="app-navbar__inner">
+        <button
+          type="button"
+          className="app-navbar__menu-btn"
+          aria-label={abierto ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={abierto}
+          onClick={toggleSidebar}
+        >
+          <i className={`bi ${abierto ? "bi-x-lg" : "bi-list"}`}></i>
+        </button>
         <Link to="/dashboard" className="app-navbar__brand">
           <img src={logo} alt="Buydrax" style={{ height: "50px", width: "auto" }} />
         </Link>

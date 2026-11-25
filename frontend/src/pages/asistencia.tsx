@@ -8,6 +8,8 @@ import { listarProyectos, type Proyecto } from "../services/proyectosService";
 import { listarUsuarios, type UsuarioPublic } from "../services/usuariosService";
 import { apiRequest } from "../services/apiClient";
 import "../styles/asistencia.css";
+import Toast from "../components/ui/Toast";
+import { useToast } from "../hooks/useToast";
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
@@ -24,14 +26,21 @@ export default function Asistencia() {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [asignaciones, setAsignaciones] = useState<AsignacionOut[]>([]);
   const [empleadoId, setEmpleadoId] = useState("");
+  const [idProyecto, setIdProyecto] = useState("");
   const [fecha, setFecha] = useState(hoyISO());
   const [horaEntrada, setHoraEntrada] = useState(ahoraHHMM());
   const [horaSalida, setHoraSalida] = useState("");
-  const [estado, setEstado] = useState("PRESENTE");
+  const [estado, setEstado] = useState("AUTO");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [ok, setOk] = useState("");
+  const [, setOk] = useState("");
+  const [archivoExcusa, setArchivoExcusa] = useState<File | null>(null);
+  const { toast, showToast, closeToast } = useToast();
+
+  useEffect(() => {
+    if (error) showToast(error);
+  }, [error, showToast]);
 
   useEffect(() => {
     Promise.all([
@@ -93,9 +102,18 @@ export default function Asistencia() {
     return null;
   };
 
+  const estadoCalculado = useMemo(() => {
+    if (estado === "INASISTENCIA" || estado === "EXCUSA") return estado;
+    const he = horaEntrada.length >= 5 ? horaEntrada.slice(0, 5) : horaEntrada;
+    const [hh, mm] = (he || "08:00").split(":").map(Number);
+    const mins = (hh || 0) * 60 + (mm || 0);
+    const limite = 8 * 60; // 08:00 default UI; backend usa turno si existe
+    return mins > limite ? "RETARDO" : "PRESENTE";
+  }, [estado, horaEntrada]);
+
   const guardar = async () => {
     if (!empleadoId) {
-      setError("Selecciona un empleado.");
+      showToast("Selecciona un empleado.", "error"); setError("Selecciona un empleado.");
       return;
     }
     const hoy = hoyISO();
@@ -104,33 +122,37 @@ export default function Asistencia() {
     const sinHoras = esExcusa || esInasistencia;
 
     if (!fecha) {
-      setError("La fecha es obligatoria.");
+      showToast("La fecha es obligatoria.", "error"); setError("La fecha es obligatoria.");
       return;
     }
     if (fecha > hoy) {
-      setError("No se permiten fechas futuras.");
+      showToast("No se permiten fechas futuras.", "error"); setError("No se permiten fechas futuras.");
       return;
     }
     if (!esExcusa && fecha !== hoy) {
-      setError("Solo con Excusa se puede usar una fecha distinta de hoy.");
+      showToast("Solo con Excusa se puede usar una fecha distinta de hoy.", "error"); setError("Solo con Excusa se puede usar una fecha distinta de hoy.");
       return;
     }
     if (!sinHoras && !horaEntrada) {
-      setError("Falta la hora de entrada.");
+      showToast("Falta la hora de entrada.", "error"); setError("Falta la hora de entrada.");
       return;
     }
     if (horaSalida && horaEntrada && horaSalida < horaEntrada) {
-      setError("La hora de salida no puede ser anterior a la de entrada.");
+      showToast("La hora de salida no puede ser anterior a la de entrada.", "error"); setError("La hora de salida no puede ser anterior a la de entrada.");
       return;
     }
 
     const errProy = validarFechaEnProyectos(empleadoId, fecha);
     if (errProy) {
-      setError(errProy);
+      showToast(errProy); setError(errProy);
+      return;
+    }
+    if (!idProyecto) {
+      showToast("Selecciona el proyecto correspondiente del empleado.", "error"); setError("Selecciona el proyecto correspondiente del empleado.");
       return;
     }
 
-    const estadoApi = esExcusa ? "INASISTENCIA" : estado;
+    const estadoApi = esExcusa ? "INASISTENCIA" : estado === "AUTO" ? "AUTO" : estado;
     const entrada = sinHoras ? "00:00:00" : horaEntrada.length === 5 ? `${horaEntrada}:00` : horaEntrada;
     const salida = sinHoras
       ? null
@@ -139,7 +161,10 @@ export default function Asistencia() {
           ? `${horaSalida}:00`
           : horaSalida
         : null;
-    const observacion = esExcusa ? "EXCUSA" : esInasistencia ? "INASISTENCIA" : null;
+    let observacion: string | null = esExcusa ? "EXCUSA" : esInasistencia ? "INASISTENCIA" : null;
+    if (esExcusa && archivoExcusa) {
+      observacion = `EXCUSA | archivo: ${archivoExcusa.name}`;
+    }
 
     try {
       setSaving(true);
@@ -151,23 +176,25 @@ export default function Asistencia() {
           fecha,
           hora_entrada: entrada,
           hora_salida: salida,
-          estado_asistencia: estadoApi,
+          estado_asistencia: estadoApi === "AUTO" ? estadoCalculado : estadoApi,
           observacion,
+          id_proyecto: idProyecto ? Number(idProyecto) : null,
         }),
       });
-      setOk(
-        esExcusa
-          ? "Excusa registrada (sin horas de jornada)."
-          : esInasistencia
-            ? "Inasistencia registrada (día no trabajado)."
-            : "Asistencia registrada."
-      );
+      const msg = esExcusa
+        ? "Excusa registrada (sin horas de jornada)."
+        : esInasistencia
+          ? "Inasistencia registrada (día no trabajado)."
+          : "Asistencia registrada.";
+      setOk(msg);
+      showToast(msg, "success");
+      setArchivoExcusa(null);
       if (estado === "PRESENTE" || estado === "RETARDO") {
         setHoraEntrada(ahoraHHMM());
         setHoraSalida("");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar");
+      const m = err instanceof Error ? err.message : "No se pudo guardar"; setError(m); showToast(m, "error");
     } finally {
       setSaving(false);
     }
@@ -175,6 +202,7 @@ export default function Asistencia() {
 
   return (
     <AppShell>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
       <Breadcrumb items={[{ label: "Asistencia", to: "/asistencia" }, { label: "Registrar" }]} />
       <div className="page-card">
         <h1 className="page-title">Registrar asistencia</h1>
@@ -183,13 +211,19 @@ export default function Asistencia() {
           proyecto al que esté asignado el empleado.
         </p>
         {loading && <p style={{ marginTop: 12 }}>Cargando empleados…</p>}
-        {ok && <p style={{ color: "#047857", marginTop: 12 }}>{ok}</p>}
         <AsistenciaForm
-          errorMsg={error}
+          errorMsg=""
           empleados={empleados}
           usuariosMap={usuariosMap}
+          proyectosMap={proyectosMap}
+          asignaciones={asignaciones}
           empleadoId={empleadoId}
-          setEmpleadoId={setEmpleadoId}
+          setEmpleadoId={(v) => {
+            setEmpleadoId(v);
+            setIdProyecto("");
+          }}
+          idProyecto={idProyecto}
+          setIdProyecto={setIdProyecto}
           fecha={fecha}
           setFecha={setFecha}
           horaEntrada={horaEntrada}
@@ -198,9 +232,12 @@ export default function Asistencia() {
           setHoraSalida={setHoraSalida}
           estado={estado}
           setEstado={setEstado}
+          estadoCalculado={estadoCalculado}
           loading={loading}
           saving={saving}
           onGuardar={guardar}
+          archivoExcusa={archivoExcusa}
+          setArchivoExcusa={setArchivoExcusa}
         />
       </div>
     </AppShell>

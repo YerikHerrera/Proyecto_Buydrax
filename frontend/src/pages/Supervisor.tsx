@@ -40,7 +40,7 @@ export default function Supervisor() {
       listarProyectos().catch(() => []),
       listarAsignaciones().catch(() => []),
       listarEmpleados().catch(() => []),
-      listarUsuarios({ limit: 300 }).catch(() => []),
+      listarUsuarios({ limit: 200 }).catch(() => []),
     ])
       .then(([sups, proys, asigs, emps, users]) => {
         setSupervisores(Array.isArray(sups) ? sups : []);
@@ -150,9 +150,15 @@ export default function Supervisor() {
 
   const nombreEmp = (id: number) => {
     const e = empleadosMap[id];
-    if (!e) return `#${id}`;
-    const u = usuariosMap[e.id_usuario];
-    return u ? nombreUsuario(u) : e.cargo || `#${id}`;
+    if (e) {
+      const u = usuariosMap[e.id_usuario];
+      if (u) {
+        const n = `${u.nombres || ""} ${u.apellidos || ""}`.trim();
+        if (n) return n;
+      }
+      return `Empleado #${id}`;
+    }
+    return `#${id}`;
   };
 
   return (
@@ -246,10 +252,13 @@ export default function Supervisor() {
       )}
 
       <div className="page-card" style={{ marginBottom: 20 }}>
-        <h1 className="page-title">Supervisores y cuadrillas</h1>
+        <h1 className="page-title">Mi cuadrilla, proyectos y personal</h1>
         <p className="page-subtitle">
-          Vista de supervisores, proyectos a cargo y empleados por cuadrilla. Las asignaciones se
-          hacen en <strong>Asignar empleado a obra</strong> (elige proyecto + cuadrilla).
+          Vista de supervisores, proyectos a cargo y empleados por cuadrilla.
+          Una misma cuadrilla puede estar en varios proyectos (distintos equipos de obra).
+          Para <strong>asignar o destituir</strong> personal: usa{" "}
+          <a href="/proyectos/asignacion">Asignar empleado a obra</a> → Retirar quita al
+          empleado de esa cuadrilla/proyecto (no elimina la cuadrilla).
         </p>
         {error && <p style={{ color: "#b00020" }}>{error}</p>}
         {loading && <p style={{ color: "#64748b" }}>Cargando…</p>}

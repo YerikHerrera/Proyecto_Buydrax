@@ -6,6 +6,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.modelos import AdminRrhh, Contador, Perfil, Supervisor, Usuario
+from app.nucleo.tenant import sql_dominio_correo
 
 
 class RepositorioUsuarios:
@@ -40,6 +41,7 @@ class RepositorioUsuarios:
         correo: Optional[str] = None,
         rol: Optional[str] = None,
         estado: Optional[bool] = None,
+        dominio: Optional[str] = None,
         skip: int = 0,
         limit: int = 50,
     ) -> tuple[Sequence[Usuario], int]:
@@ -59,7 +61,9 @@ class RepositorioUsuarios:
             filters.append(Usuario.estado == estado)
         if rol:
             filters.append(Perfil.nombre == rol.upper())
-
+        if dominio:
+            filters.append(sql_dominio_correo(Usuario.correo) == dominio.lower())
+        
         base = select(Usuario).options(joinedload(Usuario.perfil)).outerjoin(Perfil)
         count_stmt = select(func.count(Usuario.id_usuario)).select_from(Usuario).outerjoin(Perfil)
 

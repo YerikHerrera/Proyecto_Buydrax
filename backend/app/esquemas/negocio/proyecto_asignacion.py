@@ -49,7 +49,8 @@ class ProyectoOut(ORM):
 
 class AsignacionCreate(BaseModel):
     id_empleado: int
-    cuadrilla: str
+    cuadrilla: str = "General"
+    id_cuadrilla: Optional[int] = None
     rol_en_proyecto: str
     fecha_asignacion: date
 
@@ -60,6 +61,7 @@ class AsignacionOut(ORM):
     id_proyecto: int
     id_empleado: int
     cuadrilla: str
+    id_cuadrilla: Optional[int] = None
     rol_en_proyecto: str
     fecha_asignacion: date
     activo: bool

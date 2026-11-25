@@ -26,6 +26,7 @@ class ServicioEmpleados:
         documento: Optional[str] = None,
         estado: Optional[str] = None,
         supervisor: Optional[int] = None,
+        dominio: Optional[str] = None,
         skip: int = 0,
         limit: int = 50,
     ) -> Sequence[Empleado]:
@@ -33,6 +34,7 @@ class ServicioEmpleados:
             documento=documento,
             estado=estado,
             supervisor=supervisor,
+            dominio=dominio,
             skip=skip,
             limit=limit,
         )
@@ -68,8 +70,8 @@ class ServicioEmpleados:
                 user.estado = False
         return self.repo.actualizar(emp)
 
-    def exportar(self, formato: str = "json") -> dict[str, Any]:
-        rows = self.repo.listar_todos()
+    def exportar(self, formato: str = "json", dominio: Optional[str] = None) -> dict[str, Any]:
+        rows = self.repo.listar_todos(dominio=dominio)
         data = [EmpleadoOut.model_validate(r).model_dump(mode="json") for r in rows]
         if formato.lower() == "csv":
             if not data:

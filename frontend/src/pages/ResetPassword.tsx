@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../assets/logobuydrax.png";
 import { resetPassword } from "../services/authService";

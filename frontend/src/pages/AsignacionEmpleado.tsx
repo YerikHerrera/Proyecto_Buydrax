@@ -9,8 +9,10 @@ import { listarUsuarios, type UsuarioPublic } from "../services/usuariosService"
 import {
   listarAsignaciones,
   retirarAsignacion,
+  cambiarCuadrillaAsignacion,
   type AsignacionOut,
 } from "../services/asignacionesService";
+import { listarVinculos } from "../services/cuadrillasService";
 import { apiRequest } from "../services/apiClient";
 import "../styles/AsignacionEmpleado.css";
 
@@ -32,6 +34,8 @@ export default function AsignacionEmpleado() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [errorFecha, setErrorFecha] = useState("");
+  const [cambiarId, setCambiarId] = useState<number | null>(null);
+  const [nuevaCuadrilla, setNuevaCuadrilla] = useState("");
   const [cuadrillasOpts, setCuadrillasOpts] = useState<string[]>([
     "General",
     "Cuadrilla A",
@@ -158,6 +162,47 @@ export default function AsignacionEmpleado() {
     }
   };
 
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!proyectoId) return;
+      try {
+        const vins = await listarVinculos({ id_proyecto: Number(proyectoId), solo_activos: true });
+        if (cancelled) return;
+        const names = vins.map((v) => v.nombre_cuadrilla).filter(Boolean) as string[];
+        if (names.length) {
+          setCuadrillasOpts([...new Set(names)].sort());
+          setCuadrilla((prev) => (names.includes(prev) ? prev : names[0]));
+        }
+      } catch {
+        /* keep previous opts */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [proyectoId]);
+
+
+  const onCambiarCuadrilla = async (idAsig: number) => {
+    if (!nuevaCuadrilla.trim()) {
+      setError("Elige la nueva cuadrilla");
+      return;
+    }
+    setError("");
+    setOk("");
+    try {
+      await cambiarCuadrillaAsignacion(idAsig, { cuadrilla: nuevaCuadrilla.trim() });
+      setOk("Cuadrilla actualizada (mismo proyecto).");
+      setCambiarId(null);
+      setNuevaCuadrilla("");
+      await cargarAsignaciones();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo cambiar la cuadrilla");
+    }
+  };
+
   return (
     <AppShell>
       <Breadcrumb
@@ -169,7 +214,8 @@ export default function AsignacionEmpleado() {
       <div className="page-card">
         <h1 className="page-title">Asignación de empleado</h1>
         <p className="page-subtitle">
-          Vincula personal a proyectos. Un empleado puede estar en varias obras; en{" "}
+          Vincula personal a proyectos. Las cuadrillas del proyecto se gestionan en{" "}
+          <Link to="/proyectos/cuadrillas">Gestión de cuadrillas</Link>. Un empleado puede estar en varias obras; en{" "}
           <Link to="/asistencia/turno">Asignar turnos</Link> eliges el proyecto de cada día.
         </p>
 
@@ -206,25 +252,138 @@ export default function AsignacionEmpleado() {
                 {activasDelEmpleado.length === 0 ? (
                   <p className="activas-empty">Aún sin proyectos. Completa el formulario.</p>
                 ) : (
-                  <ul className="asig-list">
+                  <ul className="asig-list" style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
                     {activasDelEmpleado.map((a) => (
-                      <li key={a.id_asignacion}>
-                        <span>
-                          <strong>{nombreProyecto(a.id_proyecto)}</strong>
-                          <span style={{ color: "#64748b" }}>
-                            {" "}
-                            · {a.rol_en_proyecto} · {a.cuadrilla || "—"} · desde{" "}
+                      <li
+                        key={a.id_asignacion}
+                        style={{
+                          border: "1px solid #e7e5e4",
+                          borderRadius: 10,
+                          padding: "10px 12px",
+                          background: "#fff",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                          alignItems: "stretch",
+                        }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, color: "#1c1917", lineHeight: 1.3, fontSize: 14 }}>
+                            {nombreProyecto(a.id_proyecto)}
+                          </div>
+                          <div style={{ fontSize: 12, color: "#78716c", marginTop: 2 }}>
+                            {a.rol_en_proyecto}
+                            {" · "}
+                            <span style={{ color: "#9a3412", fontWeight: 600 }}>{a.cuadrilla || "Sin cuadrilla"}</span>
+                            {" · desde "}
                             {a.fecha_asignacion}
-                          </span>
-                        </span>
-                        <button
-                          type="button"
-                          className="agregar-btn-secundario"
-                          style={{ padding: "6px 12px", fontSize: 12 }}
-                          onClick={() => void retirar(a.id_asignacion)}
-                        >
-                          Retirar
-                        </button>
+                          </div>
+                        </div>
+
+                        {cambiarId !== a.id_asignacion ? (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCambiarId(a.id_asignacion);
+                                setNuevaCuadrilla(a.cuadrilla || "");
+                              }}
+                              style={{
+                                padding: "6px 10px",
+                                fontSize: 12,
+                                borderRadius: 8,
+                                border: "1px solid #c4b5fd",
+                                background: "#f5f3ff",
+                                color: "#5b21b6",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Cambiar cuadrilla
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void retirar(a.id_asignacion)}
+                              style={{
+                                padding: "6px 10px",
+                                fontSize: 12,
+                                borderRadius: 8,
+                                border: "1px solid #fecdd3",
+                                background: "#fff1f2",
+                                color: "#9f1239",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Retirar del proyecto
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: 6,
+                              alignItems: "center",
+                              padding: 8,
+                              background: "#fff7ed",
+                              borderRadius: 8,
+                              border: "1px solid #fed7aa",
+                            }}
+                          >
+                            <label style={{ fontSize: 12, color: "#9a3412", fontWeight: 600, width: "100%" }}>
+                              Nueva cuadrilla
+                            </label>
+                            <select
+                              value={nuevaCuadrilla}
+                              onChange={(e) => setNuevaCuadrilla(e.target.value)}
+                              style={{
+                                flex: "1 1 160px",
+                                minWidth: 140,
+                                padding: "8px 10px",
+                                borderRadius: 8,
+                                border: "1px solid #d6d3d1",
+                                fontSize: 14,
+                              }}
+                            >
+                              <option value="">Seleccionar…</option>
+                              {cuadrillasOpts.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => void onCambiarCuadrilla(a.id_asignacion)}
+                              style={{
+                                padding: "6px 12px",
+                                borderRadius: 8,
+                                background: "#ea580c",
+                                color: "#fff",
+                                border: "none",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                fontSize: 13,
+                              }}
+                            >
+                              Guardar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCambiarId(null)}
+                              style={{
+                                padding: "6px 12px",
+                                borderRadius: 8,
+                                border: "1px solid #d6d3d1",
+                                background: "#fff",
+                                color: "#44403c",
+                                cursor: "pointer",
+                                fontSize: 13,
+                              }}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ul>

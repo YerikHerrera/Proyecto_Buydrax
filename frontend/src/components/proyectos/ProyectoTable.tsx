@@ -4,7 +4,7 @@ import { useClientPagination } from "../../hooks/useClientPagination";
 
 interface Props {
   proyectos: Proyecto[];
-  onEditar: (proyecto: Proyecto) => void;
+  onEditar?: (proyecto: Proyecto) => void;
 }
 
 export default function ProyectoTable({ proyectos, onEditar }: Props) {
@@ -35,6 +35,7 @@ export default function ProyectoTable({ proyectos, onEditar }: Props) {
                 </td>
                 <td style={{ padding: 10 }}>{proyecto.estado_proyecto}</td>
                 <td style={{ padding: 10 }}>
+                  {onEditar && (
                   <button
                     type="button"
                     className="agregar-btn-secundario"
@@ -42,6 +43,7 @@ export default function ProyectoTable({ proyectos, onEditar }: Props) {
                   >
                     Editar
                   </button>
+                  )}
                 </td>
               </tr>
             ))}
